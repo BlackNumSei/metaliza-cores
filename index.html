@@ -4,118 +4,157 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Metaliza · Cadastro de Cores</title>
+<link rel="icon" href="logo.webp" type="image/webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --fundo:#f3f4f6; --cartao:#ffffff; --texto:#1f2328; --suave:#5b6470; --linha:#dfe3e8;
-    --topo:#2b2f36; --topo2:#3d434c; --primaria:#1f6feb; --primaria-escura:#1858c0;
-    --perigo:#c62828; --ok:#2e7d32; --destaque:#fff6d6;
-    --raio:12px;
+    --fundo:#FFFFFF; --soft:#F8FAFC; --sunken:#F1F5F9; --cartao:#FFFFFF;
+    --texto:#0F172A; --texto2:#334155; --suave:#5B6779; --linha:#E2E8F0;
+    --primaria:#203F6E; --primaria-escura:#2C5596; --primaria-suave:#E8EEF7;
+    --perigo:#B42318; --perigo-suave:#FEE4E2; --ok:#15803D;
+    --sombra:0 1px 2px rgba(15,23,42,.06), 0 12px 32px -14px rgba(15,23,42,.22);
+    --fonte:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+    --raio:16px;
   }
   *{box-sizing:border-box}
   html,body{margin:0}
-  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:18px;color:var(--texto);background:var(--fundo);line-height:1.4}
+  body{font-family:var(--fonte);font-size:17px;color:var(--texto);background:var(--fundo);line-height:1.45;-webkit-tap-highlight-color:transparent}
   button,input,select,textarea{font:inherit;color:inherit}
-  .topo{background:linear-gradient(180deg,var(--topo2),var(--topo));color:#fff;padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;position:sticky;top:0;z-index:5;box-shadow:0 2px 6px rgba(0,0,0,.2)}
-  .marca{font-size:24px;font-weight:800;letter-spacing:.5px}
-  .marca span{font-weight:400;opacity:.8}
-  nav{display:flex;gap:8px;flex-wrap:wrap}
-  .aba{background:transparent;border:2px solid rgba(255,255,255,.25);color:#fff;padding:10px 18px;border-radius:999px;cursor:pointer;font-size:17px}
-  .aba.ativa{background:#fff;color:var(--topo);border-color:#fff;font-weight:700}
-  main{max-width:1100px;margin:0 auto;padding:20px 16px 80px}
-  h1{font-size:28px;margin:0 0 4px}
-  h2{font-size:22px;margin:0 0 12px}
-  .sub{color:var(--suave);margin:0 0 16px}
-  .barra{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
-  .busca{flex:1;min-width:220px;padding:14px 16px;border:2px solid var(--linha);border-radius:var(--raio);font-size:20px;background:#fff}
-  .busca:focus,.campo:focus{outline:none;border-color:var(--primaria)}
-  .btn{border:2px solid var(--linha);background:#fff;padding:12px 18px;border-radius:var(--raio);cursor:pointer;font-weight:600;font-size:17px;white-space:nowrap}
-  .btn:hover{border-color:#b9c0c8}
-  .btn.primario{background:var(--primaria);border-color:var(--primaria);color:#fff}
-  .btn.primario:hover{background:var(--primaria-escura)}
-  .btn.perigo{color:var(--perigo);border-color:#f1c4c4}
+  button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--primaria-escura);outline-offset:2px}
+  .topo{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--linha)}
+  .topo-in{max-width:1100px;margin:0 auto;height:72px;padding:0 16px;display:flex;align-items:center}
+  .marca{display:inline-flex;align-items:center;gap:12px;font-size:22px;font-weight:800;letter-spacing:-.01em;color:var(--primaria);cursor:pointer;background:none;border:none;padding:4px;border-radius:12px}
+  .marca img{width:40px;height:40px;border-radius:10px;display:block}
+  main{max-width:1100px;margin:0 auto;padding:28px 16px 80px}
+  nav.abas{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--sunken);padding:5px;border-radius:var(--raio);margin-bottom:28px}
+  .aba{background:transparent;border:none;color:var(--suave);padding:14px 10px;border-radius:12px;cursor:pointer;font-size:17px;font-weight:600;transition:background .15s,color .15s}
+  .aba:hover{color:var(--texto)}
+  .aba.ativa{background:#fff;color:var(--texto);font-weight:700;box-shadow:0 1px 2px rgba(15,23,42,.08)}
+  .sobre{font-size:13px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--suave);margin:0 0 6px}
+  h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px;line-height:1.15}
+  h2{font-size:20px;font-weight:700;margin:0 0 14px;letter-spacing:-.01em}
+  .sub{color:var(--suave);margin:0 0 20px}
+  .barra{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+  .busca{flex:1;min-width:220px;min-height:52px;padding:12px 16px;border:1px solid var(--linha);border-radius:12px;font-size:18px;background:var(--soft)}
+  .busca:focus,.campo:focus{outline:none;border-color:var(--primaria);background:#fff}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border:1px solid var(--linha);background:#fff;padding:10px 20px;border-radius:12px;cursor:pointer;font-weight:600;font-size:16px;white-space:nowrap;transition:border-color .15s,color .15s,background .15s,transform .1s}
+  .btn:hover{border-color:var(--primaria);color:var(--primaria)}
+  .btn:active{transform:scale(.98)}
+  .btn.primario{background:var(--primaria);border-color:var(--primaria);color:#fff;font-weight:700;box-shadow:0 6px 16px -8px rgba(32,63,110,.7)}
+  .btn.primario:hover{background:var(--primaria-escura);border-color:var(--primaria-escura);color:#fff}
+  .btn.perigo{color:var(--perigo);border-color:#F4C7C3}
+  .btn.perigo:hover{background:var(--perigo-suave);border-color:var(--perigo)}
   .btn.perigo.cheio{background:var(--perigo);color:#fff;border-color:var(--perigo)}
-  .btn.grande{font-size:19px;padding:14px 22px}
-  .btn.peq{padding:8px 12px;font-size:15px}
-  .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
-  .cartao{background:var(--cartao);border:1px solid var(--linha);border-radius:var(--raio);padding:16px;cursor:pointer;display:flex;gap:14px;align-items:center;transition:box-shadow .15s,transform .15s}
-  .cartao:hover{box-shadow:0 4px 14px rgba(0,0,0,.08);transform:translateY(-1px)}
-  .amostra{width:54px;height:54px;border-radius:10px;border:1px solid rgba(0,0,0,.15);flex-shrink:0;background:repeating-linear-gradient(45deg,#e6e8eb 0 6px,#f6f7f8 6px 12px)}
-  .amostra.grande{width:84px;height:84px;border-radius:14px}
-  .ref{font-size:21px;font-weight:800;word-break:break-word}
-  .nome{color:var(--suave);font-size:16px;word-break:break-word}
+  .btn.grande{min-height:52px;font-size:17px;padding:12px 24px}
+  .btn.peq{min-height:42px;padding:8px 14px;font-size:15px}
+  .pilula{min-height:46px;padding:8px 20px;border-radius:999px;border:1px solid var(--linha);background:#fff;font-weight:600;font-size:16px;cursor:pointer;transition:all .15s}
+  .pilula:hover{border-color:var(--primaria);color:var(--primaria)}
+  .pilula.ativa{background:var(--primaria);border-color:var(--primaria);color:#fff}
+  .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+  .cartao{background:var(--cartao);border:1px solid var(--linha);border-radius:var(--raio);padding:18px;cursor:pointer;display:flex;gap:14px;align-items:center;transition:box-shadow .15s,border-color .15s}
+  .cartao:hover{box-shadow:var(--sombra);border-color:#CBD5E1}
+  .amostra{width:56px;height:56px;border-radius:12px;border:1px solid rgba(15,23,42,.12);flex-shrink:0;background:repeating-linear-gradient(45deg,#E2E8F0 0 6px,#F1F5F9 6px 12px)}
+  .amostra.grande{width:88px;height:88px;border-radius:16px}
+  .ref{font-size:19px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+  .nome{color:var(--texto2);font-size:16px;word-break:break-word}
   .mini{color:var(--suave);font-size:14px;margin-top:2px}
-  .caixa{background:var(--cartao);border:1px solid var(--linha);border-radius:var(--raio);padding:20px;margin-bottom:18px}
-  .voltar{background:none;border:none;color:var(--primaria);font-size:18px;cursor:pointer;padding:4px 0;margin-bottom:12px;font-weight:600}
+  .caixa{background:var(--cartao);border:1px solid var(--linha);border-radius:var(--raio);padding:22px;margin-bottom:18px}
+  .voltar{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--primaria);font-size:17px;cursor:pointer;padding:6px 0;margin-bottom:16px;font-weight:600}
   .cab-detalhe{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
   .cab-detalhe .info{flex:1;min-width:200px}
+  .cab-detalhe h1{text-transform:uppercase;letter-spacing:.01em}
   .acoes{display:flex;gap:10px;flex-wrap:wrap}
   table{width:100%;border-collapse:collapse}
-  th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--linha);vertical-align:middle}
-  th{font-size:15px;color:var(--suave);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  th,td{text-align:left;padding:14px 12px;border-bottom:1px solid var(--linha);vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  th{font-size:12px;color:var(--suave);font-weight:700;text-transform:uppercase;letter-spacing:.12em}
   td.num,th.num{text-align:right;white-space:nowrap}
-  .qtd{font-size:22px;font-weight:700}
-  .nova{background:var(--destaque)}
-  .tag{display:inline-block;font-size:13px;padding:2px 10px;border-radius:999px;background:#eef1f5;color:var(--suave);font-weight:600}
-  .obs{white-space:pre-wrap;background:#f8f9fa;border-radius:10px;padding:12px 14px;margin-top:14px;color:#333}
-  .recalc{background:#eef5ff;border:1px solid #cfe0fb}
-  .recalc .linha{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .campo{padding:12px 14px;border:2px solid var(--linha);border-radius:10px;background:#fff;font-size:18px;min-width:0}
-  .campo.num{width:130px;text-align:right}
-  label.rot{display:block;font-weight:700;margin:14px 0 6px}
+  .qtd{font-family:var(--mono);font-size:21px;font-weight:600;font-variant-numeric:tabular-nums}
+  td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .nova{background:var(--primaria-suave);color:var(--primaria)}
+  th.nova{color:var(--primaria)}
+  .tag{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;background:var(--sunken);color:var(--suave);font-weight:600;margin-left:4px}
+  .obs{white-space:pre-wrap;background:var(--soft);border:1px solid var(--linha);border-radius:12px;padding:14px 16px;margin-top:16px;color:var(--texto2)}
+  .recalc{background:linear-gradient(140deg,#18325A 0%,#203F6E 55%,#2C5596 100%);border:none;color:#fff}
+  .recalc .sobre{color:#C9D5EA}
+  .recalc .linha{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:18px}
+  .recalc .campo{border-color:transparent;background:#fff;color:var(--texto)}
+  .recalc .pilula{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff}
+  .recalc .pilula:hover{background:rgba(255,255,255,.2);border-color:#fff}
+  .recalc .pilula.ativa{background:#fff;color:var(--primaria);border-color:#fff}
+  .campo{min-height:48px;padding:10px 14px;border:1px solid var(--linha);border-radius:12px;background:var(--soft);font-size:17px;min-width:0}
+  .campo.num{width:130px;text-align:right;font-family:var(--mono);font-weight:600}
+  label.rot{display:block;font-weight:700;font-size:15px;margin:16px 0 6px;color:var(--texto2)}
   .form-grade{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
   .form-grade .inteiro{grid-column:1/-1}
-  .linha-ing{display:grid;grid-template-columns:1fr 130px 110px 50px;gap:8px;align-items:center;margin-bottom:8px}
+  .linha-ing{display:grid;grid-template-columns:1fr 130px 110px 48px;gap:8px;align-items:center;margin-bottom:8px}
   .linha-ing .campo{width:100%}
-  .x{background:#fff;border:2px solid #f1c4c4;color:var(--perigo);border-radius:10px;height:50px;cursor:pointer;font-size:22px;font-weight:700}
-  .cab-ing{display:grid;grid-template-columns:1fr 130px 110px 50px;gap:8px;color:var(--suave);font-size:14px;font-weight:600;text-transform:uppercase;margin-bottom:4px}
+  .x{background:#fff;border:1px solid #F4C7C3;color:var(--perigo);border-radius:12px;height:48px;cursor:pointer;font-size:22px;font-weight:600}
+  .x:hover{background:var(--perigo-suave)}
+  .cab-ing{display:grid;grid-template-columns:1fr 130px 110px 48px;gap:8px;color:var(--suave);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px}
   .rodape-form{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px}
-  .vazio{text-align:center;color:var(--suave);padding:50px 20px;background:#fff;border:2px dashed var(--linha);border-radius:var(--raio)}
-  .grupo{margin-bottom:22px}
-  .grupo h3{font-size:16px;text-transform:uppercase;letter-spacing:.5px;color:var(--suave);margin:0 0 8px}
-  .item-lista{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#fff;border:1px solid var(--linha);border-radius:10px;margin-bottom:8px;flex-wrap:wrap}
+  .vazio{text-align:center;color:var(--suave);padding:50px 20px;background:var(--soft);border:1px dashed #CBD5E1;border-radius:var(--raio)}
+  .grupo{margin-bottom:24px}
+  .grupo h3{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--suave);margin:0 0 10px;font-weight:700}
+  .item-lista{display:flex;align-items:center;gap:10px;padding:14px 16px;background:#fff;border:1px solid var(--linha);border-radius:14px;margin-bottom:8px;flex-wrap:wrap}
   .item-lista .cresce{flex:1;min-width:150px}
-  .item-lista strong{font-size:19px}
-  .adicionar{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .item-lista strong{font-size:18px}
+  .adicionar{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
   .adicionar .campo{flex:1;min-width:140px}
-  .modal-fundo{position:fixed;inset:0;background:rgba(20,24,30,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+  .modal-fundo{position:fixed;inset:0;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
   .modal-fundo[hidden]{display:none}
-  .modal{background:#fff;border-radius:16px;max-width:480px;width:100%;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.3);max-height:90vh;overflow:auto}
+  .modal{background:#fff;border-radius:24px;max-width:480px;width:100%;padding:26px;box-shadow:0 20px 50px rgba(15,23,42,.3);max-height:90vh;overflow:auto;animation:entra .2s ease-out}
+  @keyframes entra{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
   .modal .campo{width:100%}
   .modal p{margin:0 0 8px}
-  .aviso{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1f2328;color:#fff;padding:14px 22px;border-radius:12px;font-weight:600;z-index:30;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:90vw;text-align:center}
+  .aviso{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--texto);color:#fff;padding:14px 22px;border-radius:14px;font-weight:600;z-index:30;box-shadow:var(--sombra);max-width:90vw;text-align:center}
   .aviso.erro{background:var(--perigo)}
   .aviso[hidden]{display:none}
-  .faixa{background:#fff3cd;border:1px solid #ffe08a;color:#6b5200;padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:16px}
+  .faixa{border:1px solid #F5C26B;background:#FFF7E6;color:#7A4B00;padding:16px 20px;border-radius:var(--raio);margin-bottom:18px;font-size:16px;line-height:1.55}
   .so-impressao{display:none}
   @media (max-width:640px){
-    body{font-size:17px}
+    body{font-size:16px}
+    h1{font-size:28px}
+    .topo-in{height:60px}
+    .marca{font-size:19px}.marca img{width:34px;height:34px}
+    main{padding-top:18px}
+    .aba{font-size:15px;padding:12px 4px}
     .form-grade{grid-template-columns:1fr}
-    .linha-ing{grid-template-columns:1fr 1fr 50px;padding-bottom:12px;border-bottom:1px solid var(--linha);margin-bottom:12px}
+    .linha-ing{grid-template-columns:1fr 1fr 48px;padding-bottom:12px;border-bottom:1px solid var(--linha);margin-bottom:12px}
     .linha-ing > select:first-child{grid-column:1/-1}
     .cab-ing{display:none}
-    .campo.num{width:100px}
-    th,td{padding:10px 6px}
-    .qtd{font-size:19px}
+    .campo.num{width:110px}
+    th,td{padding:12px 6px}
+    .qtd{font-size:18px}
+    .acoes .btn{flex:1}
   }
   @media print{
-    body{background:#fff;font-size:14pt}
-    .topo,.voltar,.acoes,.recalc,.faixa,.aviso,.modal-fundo{display:none!important}
+    body{font-size:13pt}
+    .topo,nav.abas,.voltar,.acoes,.recalc,.faixa,.aviso,.modal-fundo{display:none!important}
     main{padding:0;max-width:none}
     .caixa{border:none;padding:0}
-    .so-impressao{display:block;color:#555;margin-top:20px;font-size:11pt}
+    .nova{background:none}
+    .so-impressao{display:block;color:#555;margin-top:20px;font-size:10pt}
   }
 </style>
 </head>
 <body>
 <header class="topo">
-  <div class="marca">Metaliza <span>Cores</span></div>
-  <nav>
-    <button class="aba" data-aba="cores" onclick="irAba('cores')">🎨 Cores</button>
-    <button class="aba" data-aba="ingredientes" onclick="irAba('ingredientes')">🧪 Ingredientes</button>
-    <button class="aba" data-aba="ajustes" onclick="irAba('ajustes')">⚙️ Ajustes</button>
-  </nav>
+  <div class="topo-in">
+    <button class="marca" onclick="irAba('cores')" title="Início"><img src="logo.webp" alt="">Metaliza</button>
+  </div>
 </header>
-<main id="app"></main>
+<main>
+  <nav class="abas">
+    <button class="aba" data-aba="cores" onclick="irAba('cores')">Cores</button>
+    <button class="aba" data-aba="ingredientes" onclick="irAba('ingredientes')">Ingredientes</button>
+    <button class="aba" data-aba="ajustes" onclick="irAba('ajustes')">Ajustes</button>
+  </nav>
+  <div id="app"></div>
+</main>
 <div id="modal" class="modal-fundo" hidden onclick="if(event.target===this)fecharModal()"><div class="modal" id="modalCaixa"></div></div>
 <div id="aviso" class="aviso" hidden></div>
 
@@ -247,7 +286,7 @@ function sairDaEdicao(continuar) {
 function desenhar() {
   document.querySelectorAll('.aba').forEach(b => b.classList.toggle('ativa', b.dataset.aba === tela.aba));
   const app = document.getElementById('app');
-  const faixa = podeSalvar ? '' : '<div class="faixa">⚠️ Este navegador não está permitindo salvar. O que for feito agora pode se perder ao fechar a página.</div>';
+  const faixa = podeSalvar ? '' : '<div class="faixa"><b>Atenção:</b> este navegador não está permitindo salvar. O que for feito agora pode se perder ao fechar a página.</div>';
   if (tela.aba === 'cores') {
     if (tela.modo === 'ver') app.innerHTML = faixa + telaDetalhe();
     else if (tela.modo === 'editar') app.innerHTML = faixa + telaEditar();
@@ -263,10 +302,11 @@ function desenhar() {
 /* ================= CORES: LISTA ================= */
 function telaListaCores() {
   return `
+    <p class="sobre">Laboratório · Cores</p>
     <h1>Cores cadastradas</h1>
     <p class="sub">Toque em uma cor para ver a fórmula.</p>
     <div class="barra">
-      <input id="busca" class="busca" type="search" placeholder="🔍 Buscar por referência ou nome..." value="${esc(tela.busca)}" autocomplete="off">
+      <input id="busca" class="busca" type="search" placeholder="Buscar por referência ou nome..." value="${esc(tela.busca)}" autocomplete="off">
       <button class="btn primario grande" onclick="novaCor()">+ Nova cor</button>
     </div>
     <div id="listaCores">${gradeCores()}</div>`;
@@ -304,27 +344,29 @@ function telaDetalhe() {
   if (tela.baseIdx >= c.itens.length) tela.baseIdx = 0;
   const base = c.itens[tela.baseIdx];
   return `
-    <button class="voltar" onclick="tela.modo='lista';desenhar()">← Voltar para a lista</button>
+    <button class="voltar" onclick="tela.modo='lista';desenhar()">‹ Voltar</button>
     <div class="caixa">
       <div class="cab-detalhe">
         <div class="amostra grande" style="${c.hex ? 'background:' + esc(c.hex) : ''}"></div>
         <div class="info">
+          <p class="sobre">Referência</p>
           <h1>${esc(c.referencia)}</h1>
           ${c.nome ? `<div class="nome" style="font-size:19px">${esc(c.nome)}</div>` : ''}
           <div class="mini">Última alteração: ${dataBR(c.atualizado)}</div>
         </div>
         <div class="acoes">
-          <button class="btn primario grande" onclick="editarCor('${c.id}')">✏️ Editar</button>
-          <button class="btn" onclick="window.print()">🖨️ Imprimir</button>
-          <button class="btn" onclick="duplicarCor('${c.id}')">📄 Duplicar</button>
-          <button class="btn perigo" onclick="excluirCor('${c.id}')">🗑️ Excluir</button>
+          <button class="btn primario grande" onclick="editarCor('${c.id}')">Editar</button>
+          <button class="btn" onclick="window.print()">Imprimir</button>
+          <button class="btn" onclick="duplicarCor('${c.id}')">Duplicar</button>
+          <button class="btn perigo" onclick="excluirCor('${c.id}')">Excluir</button>
         </div>
       </div>
     </div>
 
     ${c.itens.length ? `
     <div class="caixa recalc">
-      <h2>🧮 Recalcular para outra quantidade</h2>
+      <p class="sobre">Recalcular</p>
+      <h2>Fazer outra quantidade</h2>
       <div class="linha">
         <span>Vou usar</span>
         <input id="baseValor" class="campo num" inputmode="decimal" value="${fmt(base.qtd * tela.fator)}">
@@ -335,12 +377,7 @@ function telaDetalhe() {
         </select>
       </div>
       <div class="linha" style="margin-top:12px">
-        <span class="mini" style="margin:0">Atalhos:</span>
-        <button class="btn peq" onclick="definirFator(0.5)">Metade</button>
-        <button class="btn peq" onclick="definirFator(2)">× 2</button>
-        <button class="btn peq" onclick="definirFator(3)">× 3</button>
-        <button class="btn peq" onclick="definirFator(5)">× 5</button>
-        <button class="btn peq" onclick="definirFator(1)">Original</button>
+        ${[[0.5,'Metade'],[1,'Original'],[2,'× 2'],[3,'× 3'],[5,'× 5']].map(([f,t]) => `<button class="pilula ${Math.abs(tela.fator - f) < 1e-9 ? 'ativa' : ''}" data-fator="${f}" onclick="definirFator(${f})">${t}</button>`).join('')}
       </div>
     </div>` : ''}
 
@@ -376,6 +413,7 @@ function ligarRecalculo() {
     if (isFinite(n) && n > 0 && base.qtd > 0) { tela.fator = n / base.qtd; }
     else if (val.value.trim() === '') { tela.fator = 1; }
     document.getElementById('tabelaFormula').innerHTML = tabelaFormula(c);
+    marcarPilulas();
   });
   sel.addEventListener('change', () => {
     tela.baseIdx = +sel.value;
@@ -390,6 +428,10 @@ function definirFator(f) {
   const val = document.getElementById('baseValor');
   if (val) val.value = fmt(c.itens[tela.baseIdx].qtd * f, 2);
   document.getElementById('tabelaFormula').innerHTML = tabelaFormula(c);
+  marcarPilulas();
+}
+function marcarPilulas() {
+  document.querySelectorAll('.pilula[data-fator]').forEach(b => b.classList.toggle('ativa', Math.abs(tela.fator - +b.dataset.fator) < 1e-9));
 }
 function duplicarCor(id) {
   const c = corPorId(id);
@@ -437,7 +479,8 @@ function opcoesUnidades(sel) {
 function telaEditar() {
   const r = tela.rascunho;
   return `
-    <button class="voltar" onclick="cancelarEdicao()">← Cancelar</button>
+    <button class="voltar" onclick="cancelarEdicao()">‹ Cancelar</button>
+    <p class="sobre">Laboratório · Cores</p>
     <h1>${r.id ? 'Editar cor' : 'Nova cor'}</h1>
     <p class="sub">Preencha os dados e clique em <b>Salvar</b> no final.</p>
     <div class="caixa">
@@ -471,7 +514,7 @@ function telaEditar() {
     </div>
     <div class="rodape-form">
       <button class="btn grande" onclick="cancelarEdicao()">Cancelar</button>
-      <button class="btn primario grande" onclick="salvarCor()">💾 Salvar cor</button>
+      <button class="btn primario grande" onclick="salvarCor()">Salvar cor</button>
     </div>`;
 }
 function adicionarLinha() {
@@ -522,7 +565,7 @@ function salvarCor() {
   salvar();
   tela.rascunho = null; tela.modo = 'ver'; tela.corId = cor.id; tela.fator = 1; tela.baseIdx = 0;
   desenhar(); window.scrollTo(0, 0);
-  aviso('✅ Cor salva!');
+  aviso('Cor salva!');
 }
 
 /* ================= INGREDIENTES ================= */
@@ -530,10 +573,11 @@ function usosDoIngrediente(id) { return dados.cores.filter(c => c.itens.some(it 
 
 function telaIngredientes() {
   return `
+    <p class="sobre">Laboratório · Cadastro</p>
     <h1>Ingredientes</h1>
     <p class="sub">Vernizes, bases, pigmentos, solventes... tudo que entra nas fórmulas.</p>
     <div class="barra">
-      <input id="buscaIng" class="busca" type="search" placeholder="🔍 Buscar ingrediente..." value="${esc(tela.buscaIng)}" autocomplete="off">
+      <input id="buscaIng" class="busca" type="search" placeholder="Buscar ingrediente..." value="${esc(tela.buscaIng)}" autocomplete="off">
       <button class="btn primario grande" onclick="formIngrediente(null, ()=>desenhar())">+ Novo ingrediente</button>
     </div>
     <div id="listaIng">${listaIngredientes()}</div>`;
@@ -551,8 +595,8 @@ function listaIngredientes() {
         const n = usosDoIngrediente(i.id).length;
         return `<div class="item-lista">
           <div class="cresce"><strong>${esc(i.nome)}</strong><div class="mini">Unidade padrão: ${esc(i.unidade || '—')} · usado em ${n} ${n === 1 ? 'cor' : 'cores'}</div></div>
-          <button class="btn peq" onclick="formIngrediente('${i.id}', ()=>desenhar())">✏️ Editar</button>
-          <button class="btn peq perigo" onclick="excluirIngrediente('${i.id}')">🗑️ Excluir</button>
+          <button class="btn peq" onclick="formIngrediente('${i.id}', ()=>desenhar())">Editar</button>
+          <button class="btn peq perigo" onclick="excluirIngrediente('${i.id}')">Excluir</button>
         </div>`;
       }).join('')}
     </div>`).join('');
@@ -575,7 +619,7 @@ function formIngrediente(id, depois) {
     let salvo;
     if (id) { salvo = ingPorId(id); Object.assign(salvo, { nome, categoria, unidade }); }
     else { salvo = { id: uid(), nome, categoria, unidade }; dados.ingredientes.push(salvo); }
-    salvar(); fecharModal(); aviso('✅ Ingrediente salvo!');
+    salvar(); fecharModal(); aviso('Ingrediente salvo!');
     depois && depois(salvo);
   };
   abrirModal(`
@@ -591,7 +635,7 @@ function formIngrediente(id, depois) {
     <p class="mini" style="margin-top:8px">A unidade padrão é só uma sugestão — em cada fórmula você pode trocar.</p>
     <div class="rodape-form" style="margin-top:18px">
       <button class="btn grande" onclick="fecharModal()">Cancelar</button>
-      <button class="btn primario grande" onclick="confirmarModal()">💾 Salvar</button>
+      <button class="btn primario grande" onclick="confirmarModal()">Salvar</button>
     </div>`);
 }
 function excluirIngrediente(id) {
@@ -616,8 +660,8 @@ function telaAjustes() {
         const n = tipo === 'categorias' ? dados.ingredientes.filter(x => x.categoria === v).length : contarUnidade(v);
         return `<div class="item-lista">
           <div class="cresce"><strong>${esc(v)}</strong><div class="mini">em uso: ${n}</div></div>
-          <button class="btn peq" onclick="renomearItem('${tipo}', ${i})">✏️ Renomear</button>
-          <button class="btn peq perigo" onclick="removerItem('${tipo}', ${i})">🗑️ Remover</button>
+          <button class="btn peq" onclick="renomearItem('${tipo}', ${i})">Renomear</button>
+          <button class="btn peq perigo" onclick="removerItem('${tipo}', ${i})">Remover</button>
         </div>`;
       }).join('') || '<p class="mini">Nada cadastrado.</p>'}
       <div class="adicionar">
@@ -626,16 +670,17 @@ function telaAjustes() {
       </div>
     </div>`;
   return `
+    <p class="sobre">Laboratório · Configurações</p>
     <h1>Ajustes</h1>
     <p class="sub">Aqui você organiza categorias, unidades e faz cópia de segurança.</p>
     ${caixaLista('Categorias de ingredientes', 'Ex.: Verniz, Base, Pigmento, Solvente.', 'categorias', dados.categorias)}
     ${caixaLista('Unidades de medida', 'Ex.: g, kg, ml, L, gotas.', 'unidades', dados.unidades)}
     <div class="caixa">
-      <h2>💾 Cópia de segurança</h2>
-      <p class="sub">Por enquanto, os dados ficam guardados <b>somente neste computador/navegador</b>. Faça uma cópia de vez em quando e guarde em um pen drive ou e-mail. Ela também serve para passar os dados para outro computador.</p>
+      <h2>Cópia de segurança</h2>
+      <div class="faixa"><b>Atenção:</b> por enquanto, os dados ficam guardados <b>somente neste computador/navegador</b>. Faça uma cópia de vez em quando e guarde em um pen drive ou e-mail. Ela também serve para passar os dados para outro computador.</div>
       <div class="acoes">
-        <button class="btn primario" onclick="baixarCopia()">⬇️ Baixar cópia de segurança</button>
-        <label class="btn" style="cursor:pointer">⬆️ Restaurar uma cópia<input type="file" accept=".json,application/json" hidden onchange="restaurarCopia(this)"></label>
+        <button class="btn primario" onclick="baixarCopia()">Baixar cópia de segurança</button>
+        <label class="btn" style="cursor:pointer">Restaurar uma cópia<input type="file" accept=".json,application/json" hidden onchange="restaurarCopia(this)"></label>
       </div>
       <p class="mini" style="margin-top:12px">Hoje: ${dados.cores.length} cores · ${dados.ingredientes.length} ingredientes</p>
     </div>`;
@@ -650,7 +695,7 @@ function adicionarItem(tipo) {
   const v = el.value.trim();
   if (!v) return;
   if (dados[tipo].some(x => normal(x) === normal(v))) { aviso('Isso já está na lista.', true); return; }
-  dados[tipo].push(v); salvar(); desenhar(); aviso('✅ Adicionado!');
+  dados[tipo].push(v); salvar(); desenhar(); aviso('Adicionado!');
   document.getElementById('novo_' + tipo)?.focus();
 }
 function renomearItem(tipo, i) {
@@ -665,14 +710,14 @@ function renomearItem(tipo, i) {
       dados.ingredientes.forEach(x => { if (x.unidade === antigo) x.unidade = novo; });
       dados.cores.forEach(c => c.itens.forEach(it => { if (it.unidade === antigo) it.unidade = novo; }));
     }
-    salvar(); fecharModal(); desenhar(); aviso('✅ Renomeado!');
+    salvar(); fecharModal(); desenhar(); aviso('Renomeado!');
   };
   abrirModal(`<h2>Renomear</h2>
     <p class="mini">Tudo que usa "<b>${esc(antigo)}</b>" será atualizado automaticamente.</p>
     <input id="fRen" class="campo" value="${esc(antigo)}">
     <div class="rodape-form" style="margin-top:18px">
       <button class="btn grande" onclick="fecharModal()">Cancelar</button>
-      <button class="btn primario grande" onclick="confirmarModal()">💾 Salvar</button>
+      <button class="btn primario grande" onclick="confirmarModal()">Salvar</button>
     </div>`);
 }
 function removerItem(tipo, i) {
@@ -692,7 +737,7 @@ function baixarCopia() {
   a.download = `metaliza-cores-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.json`;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  aviso('⬇️ Cópia baixada!');
+  aviso('Cópia baixada!');
 }
 function restaurarCopia(input) {
   const arq = input.files[0];
@@ -704,7 +749,7 @@ function restaurarCopia(input) {
     try { novo = JSON.parse(leitor.result); } catch (e) { return informar('Arquivo inválido', 'Esse arquivo não é uma cópia de segurança do Metaliza Cores.'); }
     if (!novo || !Array.isArray(novo.cores) || !Array.isArray(novo.ingredientes)) return informar('Arquivo inválido', 'Esse arquivo não é uma cópia de segurança do Metaliza Cores.');
     perguntar('Restaurar cópia?', `A cópia tem <b>${novo.cores.length} cores</b> e <b>${novo.ingredientes.length} ingredientes</b>.<br><br>Os dados atuais deste computador serão <b>substituídos</b>.`, 'Sim, restaurar', () => {
-      dados = novo; arrumar(); salvar(); desenhar(); aviso('✅ Cópia restaurada!');
+      dados = novo; arrumar(); salvar(); desenhar(); aviso('Cópia restaurada!');
     });
   };
   leitor.readAsText(arq);
