@@ -13,9 +13,9 @@ Sistema simples para cadastrar as fórmulas de cores das peças cromadas, no lug
 
 Abra o link do site (GitHub Pages) ou o arquivo `index.html` em qualquer navegador.
 
-## Importante (versão de teste)
+## Onde ficam os dados
 
-Nesta primeira versão, os dados ficam salvos **somente no navegador do computador onde foram digitados**. Outro computador ou celular não vê as mesmas cores.
+Por enquanto, os dados ficam salvos **somente no navegador do computador onde foram digitados**. Outro computador ou celular não vê as mesmas cores.
 
 - Use **Ajustes → Baixar cópia de segurança** com frequência.
 - Para levar os dados para outro computador, use **Ajustes → Restaurar uma cópia**.

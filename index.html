@@ -164,28 +164,11 @@ const CHAVE = 'metaliza-cores-v1';
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
 function dadosIniciais() {
-  const ing = [
-    { id: uid(), nome: 'Verniz', categoria: 'Verniz', unidade: 'L' },
-    { id: uid(), nome: 'Vermelho', categoria: 'Pigmento', unidade: 'g' },
-    { id: uid(), nome: 'Verde', categoria: 'Pigmento', unidade: 'g' },
-    { id: uid(), nome: 'Azul', categoria: 'Pigmento', unidade: 'g' },
-    { id: uid(), nome: 'Solvente', categoria: 'Solvente', unidade: 'ml' }
-  ];
   return {
     categorias: ['Verniz', 'Base', 'Pigmento', 'Solvente', 'Outros'],
     unidades: ['g', 'kg', 'ml', 'L', 'gotas'],
-    ingredientes: ing,
-    cores: [{
-      id: uid(), referencia: 'EXEMPLO-001', nome: 'Cor de exemplo (pode apagar)', hex: '#8a6d9c',
-      obs: 'Esta cor é só um exemplo para mostrar como o sistema funciona.\nPode editar ou excluir à vontade.',
-      itens: [
-        { ingredienteId: ing[0].id, qtd: 2, unidade: 'L' },
-        { ingredienteId: ing[1].id, qtd: 5, unidade: 'g' },
-        { ingredienteId: ing[2].id, qtd: 5, unidade: 'g' },
-        { ingredienteId: ing[3].id, qtd: 15, unidade: 'g' }
-      ],
-      atualizado: Date.now()
-    }]
+    ingredientes: [],
+    cores: []
   };
 }
 
@@ -208,6 +191,8 @@ function arrumar() {
   dados.ingredientes = Array.isArray(dados.ingredientes) ? dados.ingredientes : [];
   dados.cores = Array.isArray(dados.cores) ? dados.cores : [];
   dados.cores.forEach(c => { c.itens = Array.isArray(c.itens) ? c.itens : []; });
+  // remove a cor de exemplo da primeira versão
+  dados.cores = dados.cores.filter(c => !(c.referencia === 'EXEMPLO-001' && /pode apagar/.test(c.nome || '')));
 }
 function salvar() {
   try {
