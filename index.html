@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metaliza · Cadastro de Cores</title>
+<style>
+  :root{
+    --fundo:#f3f4f6; --cartao:#ffffff; --texto:#1f2328; --suave:#5b6470; --linha:#dfe3e8;
+    --topo:#2b2f36; --topo2:#3d434c; --primaria:#1f6feb; --primaria-escura:#1858c0;
+    --perigo:#c62828; --ok:#2e7d32; --destaque:#fff6d6;
+    --raio:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:18px;color:var(--texto);background:var(--fundo);line-height:1.4}
+  button,input,select,textarea{font:inherit;color:inherit}
+  .topo{background:linear-gradient(180deg,var(--topo2),var(--topo));color:#fff;padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;position:sticky;top:0;z-index:5;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+  .marca{font-size:24px;font-weight:800;letter-spacing:.5px}
+  .marca span{font-weight:400;opacity:.8}
+  nav{display:flex;gap:8px;flex-wrap:wrap}
+  .aba{background:transparent;border:2px solid rgba(255,255,255,.25);color:#fff;padding:10px 18px;border-radius:999px;cursor:pointer;font-size:17px}
+  .aba.ativa{background:#fff;color:var(--topo);border-color:#fff;font-weight:700}
+  main{max-width:1100px;margin:0 auto;padding:20px 16px 80px}
+  h1{font-size:28px;margin:0 0 4px}
+  h2{font-size:22px;margin:0 0 12px}
+  .sub{color:var(--suave);margin:0 0 16px}
+  .barra{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+  .busca{flex:1;min-width:220px;padding:14px 16px;border:2px solid var(--linha);border-radius:var(--raio);font-size:20px;background:#fff}
+  .busca:focus,.campo:focus{outline:none;border-color:var(--primaria)}
+  .btn{border:2px solid var(--linha);background:#fff;padding:12px 18px;border-radius:var(--raio);cursor:pointer;font-weight:600;font-size:17px;white-space:nowrap}
+  .btn:hover{border-color:#b9c0c8}
+  .btn.primario{background:var(--primaria);border-color:var(--primaria);color:#fff}
+  .btn.primario:hover{background:var(--primaria-escura)}
+  .btn.perigo{color:var(--perigo);border-color:#f1c4c4}
+  .btn.perigo.cheio{background:var(--perigo);color:#fff;border-color:var(--perigo)}
+  .btn.grande{font-size:19px;padding:14px 22px}
+  .btn.peq{padding:8px 12px;font-size:15px}
+  .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  .cartao{background:var(--cartao);border:1px solid var(--linha);border-radius:var(--raio);padding:16px;cursor:pointer;display:flex;gap:14px;align-items:center;transition:box-shadow .15s,transform .15s}
+  .cartao:hover{box-shadow:0 4px 14px rgba(0,0,0,.08);transform:translateY(-1px)}
+  .amostra{width:54px;height:54px;border-radius:10px;border:1px solid rgba(0,0,0,.15);flex-shrink:0;background:repeating-linear-gradient(45deg,#e6e8eb 0 6px,#f6f7f8 6px 12px)}
+  .amostra.grande{width:84px;height:84px;border-radius:14px}
+  .ref{font-size:21px;font-weight:800;word-break:break-word}
+  .nome{color:var(--suave);font-size:16px;word-break:break-word}
+  .mini{color:var(--suave);font-size:14px;margin-top:2px}
+  .caixa{background:var(--cartao);border:1px solid var(--linha);border-radius:var(--raio);padding:20px;margin-bottom:18px}
+  .voltar{background:none;border:none;color:var(--primaria);font-size:18px;cursor:pointer;padding:4px 0;margin-bottom:12px;font-weight:600}
+  .cab-detalhe{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  .cab-detalhe .info{flex:1;min-width:200px}
+  .acoes{display:flex;gap:10px;flex-wrap:wrap}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--linha);vertical-align:middle}
+  th{font-size:15px;color:var(--suave);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  td.num,th.num{text-align:right;white-space:nowrap}
+  .qtd{font-size:22px;font-weight:700}
+  .nova{background:var(--destaque)}
+  .tag{display:inline-block;font-size:13px;padding:2px 10px;border-radius:999px;background:#eef1f5;color:var(--suave);font-weight:600}
+  .obs{white-space:pre-wrap;background:#f8f9fa;border-radius:10px;padding:12px 14px;margin-top:14px;color:#333}
+  .recalc{background:#eef5ff;border:1px solid #cfe0fb}
+  .recalc .linha{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .campo{padding:12px 14px;border:2px solid var(--linha);border-radius:10px;background:#fff;font-size:18px;min-width:0}
+  .campo.num{width:130px;text-align:right}
+  label.rot{display:block;font-weight:700;margin:14px 0 6px}
+  .form-grade{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+  .form-grade .inteiro{grid-column:1/-1}
+  .linha-ing{display:grid;grid-template-columns:1fr 130px 110px 50px;gap:8px;align-items:center;margin-bottom:8px}
+  .linha-ing .campo{width:100%}
+  .x{background:#fff;border:2px solid #f1c4c4;color:var(--perigo);border-radius:10px;height:50px;cursor:pointer;font-size:22px;font-weight:700}
+  .cab-ing{display:grid;grid-template-columns:1fr 130px 110px 50px;gap:8px;color:var(--suave);font-size:14px;font-weight:600;text-transform:uppercase;margin-bottom:4px}
+  .rodape-form{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px}
+  .vazio{text-align:center;color:var(--suave);padding:50px 20px;background:#fff;border:2px dashed var(--linha);border-radius:var(--raio)}
+  .grupo{margin-bottom:22px}
+  .grupo h3{font-size:16px;text-transform:uppercase;letter-spacing:.5px;color:var(--suave);margin:0 0 8px}
+  .item-lista{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#fff;border:1px solid var(--linha);border-radius:10px;margin-bottom:8px;flex-wrap:wrap}
+  .item-lista .cresce{flex:1;min-width:150px}
+  .item-lista strong{font-size:19px}
+  .adicionar{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .adicionar .campo{flex:1;min-width:140px}
+  .modal-fundo{position:fixed;inset:0;background:rgba(20,24,30,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+  .modal-fundo[hidden]{display:none}
+  .modal{background:#fff;border-radius:16px;max-width:480px;width:100%;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.3);max-height:90vh;overflow:auto}
+  .modal .campo{width:100%}
+  .modal p{margin:0 0 8px}
+  .aviso{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1f2328;color:#fff;padding:14px 22px;border-radius:12px;font-weight:600;z-index:30;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:90vw;text-align:center}
+  .aviso.erro{background:var(--perigo)}
+  .aviso[hidden]{display:none}
+  .faixa{background:#fff3cd;border:1px solid #ffe08a;color:#6b5200;padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:16px}
+  .so-impressao{display:none}
+  @media (max-width:640px){
+    body{font-size:17px}
+    .form-grade{grid-template-columns:1fr}
+    .linha-ing{grid-template-columns:1fr 1fr 50px;padding-bottom:12px;border-bottom:1px solid var(--linha);margin-bottom:12px}
+    .linha-ing > select:first-child{grid-column:1/-1}
+    .cab-ing{display:none}
+    .campo.num{width:100px}
+    th,td{padding:10px 6px}
+    .qtd{font-size:19px}
+  }
+  @media print{
+    body{background:#fff;font-size:14pt}
+    .topo,.voltar,.acoes,.recalc,.faixa,.aviso,.modal-fundo{display:none!important}
+    main{padding:0;max-width:none}
+    .caixa{border:none;padding:0}
+    .so-impressao{display:block;color:#555;margin-top:20px;font-size:11pt}
+  }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="marca">Metaliza <span>Cores</span></div>
+  <nav>
+    <button class="aba" data-aba="cores" onclick="irAba('cores')">🎨 Cores</button>
+    <button class="aba" data-aba="ingredientes" onclick="irAba('ingredientes')">🧪 Ingredientes</button>
+    <button class="aba" data-aba="ajustes" onclick="irAba('ajustes')">⚙️ Ajustes</button>
+  </nav>
+</header>
+<main id="app"></main>
+<div id="modal" class="modal-fundo" hidden onclick="if(event.target===this)fecharModal()"><div class="modal" id="modalCaixa"></div></div>
+<div id="aviso" class="aviso" hidden></div>
+
+<script>
+/* ================= DADOS ================= */
+const CHAVE = 'metaliza-cores-v1';
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+function dadosIniciais() {
+  const ing = [
+    { id: uid(), nome: 'Verniz', categoria: 'Verniz', unidade: 'L' },
+    { id: uid(), nome: 'Vermelho', categoria: 'Pigmento', unidade: 'g' },
+    { id: uid(), nome: 'Verde', categoria: 'Pigmento', unidade: 'g' },
+    { id: uid(), nome: 'Azul', categoria: 'Pigmento', unidade: 'g' },
+    { id: uid(), nome: 'Solvente', categoria: 'Solvente', unidade: 'ml' }
+  ];
+  return {
+    categorias: ['Verniz', 'Base', 'Pigmento', 'Solvente', 'Outros'],
+    unidades: ['g', 'kg', 'ml', 'L', 'gotas'],
+    ingredientes: ing,
+    cores: [{
+      id: uid(), referencia: 'EXEMPLO-001', nome: 'Cor de exemplo (pode apagar)', hex: '#8a6d9c',
+      obs: 'Esta cor é só um exemplo para mostrar como o sistema funciona.\nPode editar ou excluir à vontade.',
+      itens: [
+        { ingredienteId: ing[0].id, qtd: 2, unidade: 'L' },
+        { ingredienteId: ing[1].id, qtd: 5, unidade: 'g' },
+        { ingredienteId: ing[2].id, qtd: 5, unidade: 'g' },
+        { ingredienteId: ing[3].id, qtd: 15, unidade: 'g' }
+      ],
+      atualizado: Date.now()
+    }]
+  };
+}
+
+let dados;
+let podeSalvar = true;
+
+function carregar() {
+  try {
+    const txt = localStorage.getItem(CHAVE);
+    dados = txt ? JSON.parse(txt) : dadosIniciais();
+  } catch (e) {
+    podeSalvar = false;
+    dados = dadosIniciais();
+  }
+  arrumar();
+}
+function arrumar() {
+  dados.categorias = Array.isArray(dados.categorias) ? dados.categorias : [];
+  dados.unidades = Array.isArray(dados.unidades) ? dados.unidades : [];
+  dados.ingredientes = Array.isArray(dados.ingredientes) ? dados.ingredientes : [];
+  dados.cores = Array.isArray(dados.cores) ? dados.cores : [];
+  dados.cores.forEach(c => { c.itens = Array.isArray(c.itens) ? c.itens : []; });
+}
+function salvar() {
+  try {
+    localStorage.setItem(CHAVE, JSON.stringify(dados));
+    podeSalvar = true;
+  } catch (e) {
+    podeSalvar = false;
+    aviso('Atenção: não foi possível salvar neste navegador!', true);
+  }
+}
+
+/* ================= UTILIDADES ================= */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const normal = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const lerNum = s => { const n = parseFloat(String(s ?? '').trim().replace(',', '.')); return isFinite(n) ? n : NaN; };
+const fmt = (n, casas = 3) => isFinite(n) ? Number(n).toLocaleString('pt-BR', { maximumFractionDigits: casas }) : '';
+const ingPorId = id => dados.ingredientes.find(i => i.id === id);
+const corPorId = id => dados.cores.find(c => c.id === id);
+const ordenar = arr => arr.slice().sort((a, b) => String(a).localeCompare(String(b), 'pt-BR', { numeric: true, sensitivity: 'base' }));
+const copia = o => JSON.parse(JSON.stringify(o));
+const dataBR = t => t ? new Date(t).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+
+let tempoAviso;
+function aviso(msg, erro = false) {
+  const el = document.getElementById('aviso');
+  el.textContent = msg;
+  el.className = 'aviso' + (erro ? ' erro' : '');
+  el.hidden = false;
+  clearTimeout(tempoAviso);
+  tempoAviso = setTimeout(() => el.hidden = true, erro ? 5000 : 2500);
+}
+
+/* ================= MODAL ================= */
+let acaoModal = null;
+function abrirModal(html) {
+  document.getElementById('modalCaixa').innerHTML = html;
+  document.getElementById('modal').hidden = false;
+  const primeiro = document.querySelector('#modalCaixa input, #modalCaixa select');
+  if (primeiro) setTimeout(() => primeiro.focus(), 30);
+}
+function fecharModal() { document.getElementById('modal').hidden = true; acaoModal = null; }
+function confirmarModal() { if (acaoModal) acaoModal(); }
+function perguntar(titulo, texto, botao, aoConfirmar, perigoso = true) {
+  acaoModal = () => { fecharModal(); aoConfirmar(); };
+  abrirModal(`
+    <h2>${esc(titulo)}</h2>
+    <p>${texto}</p>
+    <div class="rodape-form">
+      <button class="btn grande" onclick="fecharModal()">Cancelar</button>
+      <button class="btn grande ${perigoso ? 'perigo cheio' : 'primario'}" onclick="confirmarModal()">${esc(botao)}</button>
+    </div>`);
+}
+function informar(titulo, texto) {
+  abrirModal(`<h2>${esc(titulo)}</h2><p>${texto}</p>
+    <div class="rodape-form"><button class="btn primario grande" onclick="fecharModal()">Entendi</button></div>`);
+}
+document.addEventListener('keydown', e => {
+  if (document.getElementById('modal').hidden) return;
+  if (e.key === 'Escape') fecharModal();
+  if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); confirmarModal(); }
+});
+
+/* ================= NAVEGAÇÃO ================= */
+let tela = { aba: 'cores', modo: 'lista', corId: null, busca: '', buscaIng: '', rascunho: null, baseIdx: 0, fator: 1 };
+
+function irAba(aba) {
+  if (tela.modo === 'editar' && !sairDaEdicao(() => irAba(aba))) return;
+  tela.aba = aba; tela.modo = 'lista'; tela.corId = null;
+  desenhar(); window.scrollTo(0, 0);
+}
+function sairDaEdicao(continuar) {
+  perguntar('Sair sem salvar?', 'As alterações feitas nesta cor serão perdidas.', 'Sair sem salvar', () => { tela.modo = 'lista'; tela.rascunho = null; continuar(); });
+  return false;
+}
+
+function desenhar() {
+  document.querySelectorAll('.aba').forEach(b => b.classList.toggle('ativa', b.dataset.aba === tela.aba));
+  const app = document.getElementById('app');
+  const faixa = podeSalvar ? '' : '<div class="faixa">⚠️ Este navegador não está permitindo salvar. O que for feito agora pode se perder ao fechar a página.</div>';
+  if (tela.aba === 'cores') {
+    if (tela.modo === 'ver') app.innerHTML = faixa + telaDetalhe();
+    else if (tela.modo === 'editar') app.innerHTML = faixa + telaEditar();
+    else { app.innerHTML = faixa + telaListaCores(); ligarBuscaCores(); }
+  } else if (tela.aba === 'ingredientes') {
+    app.innerHTML = faixa + telaIngredientes(); ligarBuscaIng();
+  } else {
+    app.innerHTML = faixa + telaAjustes();
+  }
+  if (tela.modo === 'ver') ligarRecalculo();
+}
+
+/* ================= CORES: LISTA ================= */
+function telaListaCores() {
+  return `
+    <h1>Cores cadastradas</h1>
+    <p class="sub">Toque em uma cor para ver a fórmula.</p>
+    <div class="barra">
+      <input id="busca" class="busca" type="search" placeholder="🔍 Buscar por referência ou nome..." value="${esc(tela.busca)}" autocomplete="off">
+      <button class="btn primario grande" onclick="novaCor()">+ Nova cor</button>
+    </div>
+    <div id="listaCores">${gradeCores()}</div>`;
+}
+function gradeCores() {
+  const q = normal(tela.busca);
+  const lista = dados.cores
+    .filter(c => !q || normal(c.referencia + ' ' + c.nome + ' ' + (c.obs || '')).includes(q))
+    .sort((a, b) => String(a.referencia).localeCompare(String(b.referencia), 'pt-BR', { numeric: true, sensitivity: 'base' }));
+  if (!dados.cores.length) return `<div class="vazio"><p style="font-size:22px;margin:0 0 8px">Nenhuma cor cadastrada ainda.</p><p>Clique em <b>+ Nova cor</b> para começar.</p></div>`;
+  if (!lista.length) return `<div class="vazio">Nenhuma cor encontrada para "<b>${esc(tela.busca)}</b>".</div>`;
+  return `<div class="grade">${lista.map(c => `
+    <div class="cartao" onclick="verCor('${c.id}')">
+      <div class="amostra" style="${c.hex ? 'background:' + esc(c.hex) : ''}"></div>
+      <div style="min-width:0">
+        <div class="ref">${esc(c.referencia)}</div>
+        ${c.nome ? `<div class="nome">${esc(c.nome)}</div>` : ''}
+        <div class="mini">${c.itens.length} ${c.itens.length === 1 ? 'ingrediente' : 'ingredientes'}</div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+function ligarBuscaCores() {
+  const el = document.getElementById('busca');
+  el.addEventListener('input', () => { tela.busca = el.value; document.getElementById('listaCores').innerHTML = gradeCores(); });
+}
+
+/* ================= CORES: DETALHE ================= */
+function verCor(id) {
+  tela.modo = 'ver'; tela.corId = id; tela.baseIdx = 0; tela.fator = 1;
+  desenhar(); window.scrollTo(0, 0);
+}
+function telaDetalhe() {
+  const c = corPorId(tela.corId);
+  if (!c) { tela.modo = 'lista'; return telaListaCores(); }
+  if (tela.baseIdx >= c.itens.length) tela.baseIdx = 0;
+  const base = c.itens[tela.baseIdx];
+  return `
+    <button class="voltar" onclick="tela.modo='lista';desenhar()">← Voltar para a lista</button>
+    <div class="caixa">
+      <div class="cab-detalhe">
+        <div class="amostra grande" style="${c.hex ? 'background:' + esc(c.hex) : ''}"></div>
+        <div class="info">
+          <h1>${esc(c.referencia)}</h1>
+          ${c.nome ? `<div class="nome" style="font-size:19px">${esc(c.nome)}</div>` : ''}
+          <div class="mini">Última alteração: ${dataBR(c.atualizado)}</div>
+        </div>
+        <div class="acoes">
+          <button class="btn primario grande" onclick="editarCor('${c.id}')">✏️ Editar</button>
+          <button class="btn" onclick="window.print()">🖨️ Imprimir</button>
+          <button class="btn" onclick="duplicarCor('${c.id}')">📄 Duplicar</button>
+          <button class="btn perigo" onclick="excluirCor('${c.id}')">🗑️ Excluir</button>
+        </div>
+      </div>
+    </div>
+
+    ${c.itens.length ? `
+    <div class="caixa recalc">
+      <h2>🧮 Recalcular para outra quantidade</h2>
+      <div class="linha">
+        <span>Vou usar</span>
+        <input id="baseValor" class="campo num" inputmode="decimal" value="${fmt(base.qtd * tela.fator)}">
+        <span id="baseUnidade"><b>${esc(base.unidade)}</b></span>
+        <span>de</span>
+        <select id="baseIng" class="campo">
+          ${c.itens.map((it, i) => `<option value="${i}" ${i === tela.baseIdx ? 'selected' : ''}>${esc(ingPorId(it.ingredienteId)?.nome || '(ingrediente removido)')}</option>`).join('')}
+        </select>
+      </div>
+      <div class="linha" style="margin-top:12px">
+        <span class="mini" style="margin:0">Atalhos:</span>
+        <button class="btn peq" onclick="definirFator(0.5)">Metade</button>
+        <button class="btn peq" onclick="definirFator(2)">× 2</button>
+        <button class="btn peq" onclick="definirFator(3)">× 3</button>
+        <button class="btn peq" onclick="definirFator(5)">× 5</button>
+        <button class="btn peq" onclick="definirFator(1)">Original</button>
+      </div>
+    </div>` : ''}
+
+    <div class="caixa">
+      <h2>Fórmula</h2>
+      <div id="tabelaFormula">${tabelaFormula(c)}</div>
+      ${c.obs ? `<div class="obs"><b>Observações:</b><br>${esc(c.obs)}</div>` : ''}
+      <div class="so-impressao">Impresso em ${dataBR(Date.now())} · Metaliza Cores</div>
+    </div>`;
+}
+function tabelaFormula(c) {
+  if (!c.itens.length) return `<div class="vazio">Esta cor ainda não tem ingredientes. Clique em <b>Editar</b> para adicionar.</div>`;
+  const mudou = Math.abs(tela.fator - 1) > 1e-9;
+  return `<table>
+    <thead><tr><th>Ingrediente</th><th class="num">${mudou ? 'Original' : 'Quantidade'}</th>${mudou ? `<th class="num nova">Para fazer (× ${fmt(tela.fator, 2)})</th>` : ''}</tr></thead>
+    <tbody>${c.itens.map(it => {
+      const ing = ingPorId(it.ingredienteId);
+      return `<tr>
+        <td><b style="font-size:19px">${esc(ing?.nome || '(ingrediente removido)')}</b>${ing?.categoria ? ` <span class="tag">${esc(ing.categoria)}</span>` : ''}</td>
+        <td class="num ${mudou ? '' : 'qtd'}">${fmt(it.qtd)} ${esc(it.unidade)}</td>
+        ${mudou ? `<td class="num qtd nova">${fmt(it.qtd * tela.fator, 2)} ${esc(it.unidade)}</td>` : ''}
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+function ligarRecalculo() {
+  const c = corPorId(tela.corId);
+  const val = document.getElementById('baseValor');
+  const sel = document.getElementById('baseIng');
+  if (!c || !val) return;
+  val.addEventListener('input', () => {
+    const n = lerNum(val.value);
+    const base = c.itens[tela.baseIdx];
+    if (isFinite(n) && n > 0 && base.qtd > 0) { tela.fator = n / base.qtd; }
+    else if (val.value.trim() === '') { tela.fator = 1; }
+    document.getElementById('tabelaFormula').innerHTML = tabelaFormula(c);
+  });
+  sel.addEventListener('change', () => {
+    tela.baseIdx = +sel.value;
+    const base = c.itens[tela.baseIdx];
+    document.getElementById('baseUnidade').innerHTML = `<b>${esc(base.unidade)}</b>`;
+    val.value = fmt(base.qtd * tela.fator, 2);
+  });
+}
+function definirFator(f) {
+  const c = corPorId(tela.corId);
+  tela.fator = f;
+  const val = document.getElementById('baseValor');
+  if (val) val.value = fmt(c.itens[tela.baseIdx].qtd * f, 2);
+  document.getElementById('tabelaFormula').innerHTML = tabelaFormula(c);
+}
+function duplicarCor(id) {
+  const c = corPorId(id);
+  const nova = copia(c);
+  nova.id = uid();
+  nova.referencia = c.referencia + ' (cópia)';
+  nova.atualizado = Date.now();
+  dados.cores.push(nova); salvar();
+  aviso('Cópia criada. Agora ajuste o que precisar.');
+  editarCor(nova.id);
+}
+function excluirCor(id) {
+  const c = corPorId(id);
+  perguntar('Excluir cor?', `Tem certeza que deseja excluir a cor <b>${esc(c.referencia)}</b>? Isso não pode ser desfeito.`, 'Sim, excluir', () => {
+    dados.cores = dados.cores.filter(x => x.id !== id); salvar();
+    tela.modo = 'lista'; desenhar(); aviso('Cor excluída.');
+  });
+}
+
+/* ================= CORES: EDITAR ================= */
+function novaCor() {
+  tela.rascunho = { id: null, referencia: '', nome: '', hex: '', obs: '', itens: [{ ingredienteId: '', qtd: '', unidade: dados.unidades[0] || 'g' }] };
+  tela.modo = 'editar'; desenhar(); window.scrollTo(0, 0);
+}
+function editarCor(id) {
+  const c = corPorId(id);
+  tela.rascunho = copia(c);
+  tela.rascunho.itens = tela.rascunho.itens.map(it => ({ ...it, qtd: fmt(it.qtd) }));
+  if (!tela.rascunho.itens.length) tela.rascunho.itens.push({ ingredienteId: '', qtd: '', unidade: dados.unidades[0] || 'g' });
+  tela.modo = 'editar'; desenhar(); window.scrollTo(0, 0);
+}
+function opcoesIngredientes(selecionado) {
+  const porCat = {};
+  dados.ingredientes.forEach(i => { (porCat[i.categoria || 'Sem categoria'] ||= []).push(i); });
+  const grupos = ordenar(Object.keys(porCat)).map(cat => `<optgroup label="${esc(cat)}">${porCat[cat]
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+    .map(i => `<option value="${i.id}" ${i.id === selecionado ? 'selected' : ''}>${esc(i.nome)}</option>`).join('')}</optgroup>`).join('');
+  return `<option value="">— escolha —</option>${grupos}<option value="__novo">➕ Cadastrar novo ingrediente...</option>`;
+}
+function opcoesUnidades(sel) {
+  const lista = dados.unidades.slice();
+  if (sel && !lista.includes(sel)) lista.push(sel);
+  return lista.map(u => `<option ${u === sel ? 'selected' : ''}>${esc(u)}</option>`).join('');
+}
+function telaEditar() {
+  const r = tela.rascunho;
+  return `
+    <button class="voltar" onclick="cancelarEdicao()">← Cancelar</button>
+    <h1>${r.id ? 'Editar cor' : 'Nova cor'}</h1>
+    <p class="sub">Preencha os dados e clique em <b>Salvar</b> no final.</p>
+    <div class="caixa">
+      <div class="form-grade">
+        <div><label class="rot">Referência *</label><input class="campo" style="width:100%" value="${esc(r.referencia)}" oninput="tela.rascunho.referencia=this.value" placeholder="Ex.: REF-1023"></div>
+        <div><label class="rot">Nome da cor</label><input class="campo" style="width:100%" value="${esc(r.nome)}" oninput="tela.rascunho.nome=this.value" placeholder="Ex.: Champagne Rosé"></div>
+        <div class="inteiro"><label class="rot">Cor aproximada (só para reconhecer na lista)</label>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <input type="color" value="${esc(r.hex || '#cccccc')}" oninput="tela.rascunho.hex=this.value" style="width:70px;height:50px;border:none;background:none;cursor:pointer">
+            <button class="btn peq" onclick="tela.rascunho.hex='';desenhar()">Sem cor</button>
+            <span class="mini">${r.hex ? 'Escolhida' : 'Nenhuma escolhida'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caixa">
+      <h2>Ingredientes da fórmula</h2>
+      <div class="cab-ing"><span>Ingrediente</span><span style="text-align:right">Qtd.</span><span>Unidade</span><span></span></div>
+      ${r.itens.map((it, i) => `
+        <div class="linha-ing">
+          <select class="campo" onchange="mudarIngrediente(${i}, this)">${opcoesIngredientes(it.ingredienteId)}</select>
+          <input class="campo" style="text-align:right" inputmode="decimal" value="${esc(it.qtd)}" oninput="tela.rascunho.itens[${i}].qtd=this.value" placeholder="0">
+          <select class="campo" onchange="tela.rascunho.itens[${i}].unidade=this.value">${opcoesUnidades(it.unidade)}</select>
+          <button class="x" title="Remover" onclick="removerLinha(${i})">×</button>
+        </div>`).join('')}
+      <button class="btn" style="margin-top:6px" onclick="adicionarLinha()">+ Adicionar ingrediente</button>
+    </div>
+    <div class="caixa">
+      <label class="rot" style="margin-top:0">Observações</label>
+      <textarea class="campo" style="width:100%;min-height:100px" oninput="tela.rascunho.obs=this.value" placeholder="Ex.: aplicar 2 demãos, secar 20 min...">${esc(r.obs)}</textarea>
+    </div>
+    <div class="rodape-form">
+      <button class="btn grande" onclick="cancelarEdicao()">Cancelar</button>
+      <button class="btn primario grande" onclick="salvarCor()">💾 Salvar cor</button>
+    </div>`;
+}
+function adicionarLinha() {
+  tela.rascunho.itens.push({ ingredienteId: '', qtd: '', unidade: dados.unidades[0] || 'g' });
+  desenhar();
+  const linhas = document.querySelectorAll('.linha-ing select');
+  if (linhas.length) linhas[linhas.length - 2]?.focus();
+}
+function removerLinha(i) { tela.rascunho.itens.splice(i, 1); desenhar(); }
+function mudarIngrediente(i, sel) {
+  const linha = tela.rascunho.itens[i];
+  if (sel.value === '__novo') {
+    sel.value = linha.ingredienteId || '';
+    formIngrediente(null, novo => { linha.ingredienteId = novo.id; linha.unidade = novo.unidade || linha.unidade; desenhar(); });
+    return;
+  }
+  linha.ingredienteId = sel.value;
+  const ing = ingPorId(sel.value);
+  if (ing?.unidade) { linha.unidade = ing.unidade; desenhar(); }
+}
+function cancelarEdicao() {
+  const r = tela.rascunho;
+  perguntar('Cancelar?', 'O que foi alterado nesta tela não será salvo.', 'Sim, cancelar', () => {
+    tela.rascunho = null;
+    if (r.id && corPorId(r.id)) { tela.modo = 'ver'; tela.corId = r.id; } else tela.modo = 'lista';
+    desenhar();
+  });
+}
+function salvarCor() {
+  const r = tela.rascunho;
+  const ref = r.referencia.trim();
+  if (!ref) return informar('Falta a referência', 'Preencha o campo <b>Referência</b> antes de salvar.');
+  const repetida = dados.cores.find(c => c.id !== r.id && normal(c.referencia.trim()) === normal(ref));
+  if (repetida) return informar('Referência já existe', `Já existe uma cor com a referência <b>${esc(repetida.referencia)}</b>. Use outra referência.`);
+  const itens = [];
+  for (let i = 0; i < r.itens.length; i++) {
+    const it = r.itens[i];
+    const vazio = !it.ingredienteId && String(it.qtd).trim() === '';
+    if (vazio) continue;
+    if (!it.ingredienteId) return informar('Falta o ingrediente', `Na linha ${i + 1}, escolha qual é o ingrediente (ou remova a linha com o ×).`);
+    const n = lerNum(it.qtd);
+    if (!isFinite(n) || n < 0) return informar('Quantidade inválida', `Na linha ${i + 1} (<b>${esc(ingPorId(it.ingredienteId)?.nome)}</b>), digite a quantidade em números. Ex.: 15 ou 2,5`);
+    itens.push({ ingredienteId: it.ingredienteId, qtd: n, unidade: it.unidade });
+  }
+  const cor = { id: r.id || uid(), referencia: ref, nome: r.nome.trim(), hex: r.hex || '', obs: (r.obs || '').trim(), itens, atualizado: Date.now() };
+  const idx = dados.cores.findIndex(c => c.id === cor.id);
+  if (idx >= 0) dados.cores[idx] = cor; else dados.cores.push(cor);
+  salvar();
+  tela.rascunho = null; tela.modo = 'ver'; tela.corId = cor.id; tela.fator = 1; tela.baseIdx = 0;
+  desenhar(); window.scrollTo(0, 0);
+  aviso('✅ Cor salva!');
+}
+
+/* ================= INGREDIENTES ================= */
+function usosDoIngrediente(id) { return dados.cores.filter(c => c.itens.some(it => it.ingredienteId === id)); }
+
+function telaIngredientes() {
+  return `
+    <h1>Ingredientes</h1>
+    <p class="sub">Vernizes, bases, pigmentos, solventes... tudo que entra nas fórmulas.</p>
+    <div class="barra">
+      <input id="buscaIng" class="busca" type="search" placeholder="🔍 Buscar ingrediente..." value="${esc(tela.buscaIng)}" autocomplete="off">
+      <button class="btn primario grande" onclick="formIngrediente(null, ()=>desenhar())">+ Novo ingrediente</button>
+    </div>
+    <div id="listaIng">${listaIngredientes()}</div>`;
+}
+function listaIngredientes() {
+  const q = normal(tela.buscaIng);
+  const lista = dados.ingredientes.filter(i => !q || normal(i.nome + ' ' + i.categoria).includes(q));
+  if (!dados.ingredientes.length) return `<div class="vazio">Nenhum ingrediente cadastrado. Clique em <b>+ Novo ingrediente</b>.</div>`;
+  if (!lista.length) return `<div class="vazio">Nada encontrado para "<b>${esc(tela.buscaIng)}</b>".</div>`;
+  const porCat = {};
+  lista.forEach(i => { (porCat[i.categoria || 'Sem categoria'] ||= []).push(i); });
+  return ordenar(Object.keys(porCat)).map(cat => `
+    <div class="grupo"><h3>${esc(cat)}</h3>
+      ${porCat[cat].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(i => {
+        const n = usosDoIngrediente(i.id).length;
+        return `<div class="item-lista">
+          <div class="cresce"><strong>${esc(i.nome)}</strong><div class="mini">Unidade padrão: ${esc(i.unidade || '—')} · usado em ${n} ${n === 1 ? 'cor' : 'cores'}</div></div>
+          <button class="btn peq" onclick="formIngrediente('${i.id}', ()=>desenhar())">✏️ Editar</button>
+          <button class="btn peq perigo" onclick="excluirIngrediente('${i.id}')">🗑️ Excluir</button>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+function ligarBuscaIng() {
+  const el = document.getElementById('buscaIng');
+  el.addEventListener('input', () => { tela.buscaIng = el.value; document.getElementById('listaIng').innerHTML = listaIngredientes(); });
+}
+function formIngrediente(id, depois) {
+  const ing = id ? ingPorId(id) : { nome: '', categoria: '', unidade: dados.unidades[0] || '' };
+  acaoModal = () => {
+    const nome = document.getElementById('fNome').value.trim();
+    const categoria = document.getElementById('fCat').value.trim();
+    const unidade = document.getElementById('fUni').value.trim();
+    if (!nome) { aviso('Digite o nome do ingrediente.', true); return; }
+    const repetido = dados.ingredientes.find(i => i.id !== id && normal(i.nome) === normal(nome) && normal(i.categoria) === normal(categoria));
+    if (repetido) { aviso('Já existe um ingrediente com esse nome nessa categoria.', true); return; }
+    if (categoria && !dados.categorias.some(c => normal(c) === normal(categoria))) dados.categorias.push(categoria);
+    if (unidade && !dados.unidades.includes(unidade)) dados.unidades.push(unidade);
+    let salvo;
+    if (id) { salvo = ingPorId(id); Object.assign(salvo, { nome, categoria, unidade }); }
+    else { salvo = { id: uid(), nome, categoria, unidade }; dados.ingredientes.push(salvo); }
+    salvar(); fecharModal(); aviso('✅ Ingrediente salvo!');
+    depois && depois(salvo);
+  };
+  abrirModal(`
+    <h2>${id ? 'Editar ingrediente' : 'Novo ingrediente'}</h2>
+    <label class="rot">Nome *</label>
+    <input id="fNome" class="campo" value="${esc(ing.nome)}" placeholder="Ex.: Azul ftalocianina">
+    <label class="rot">Categoria</label>
+    <input id="fCat" class="campo" list="listaCats" value="${esc(ing.categoria)}" placeholder="Escolha ou digite uma nova">
+    <datalist id="listaCats">${ordenar(dados.categorias).map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+    <label class="rot">Unidade padrão</label>
+    <input id="fUni" class="campo" list="listaUnis" value="${esc(ing.unidade)}" placeholder="Ex.: g, L, ml">
+    <datalist id="listaUnis">${dados.unidades.map(u => `<option value="${esc(u)}">`).join('')}</datalist>
+    <p class="mini" style="margin-top:8px">A unidade padrão é só uma sugestão — em cada fórmula você pode trocar.</p>
+    <div class="rodape-form" style="margin-top:18px">
+      <button class="btn grande" onclick="fecharModal()">Cancelar</button>
+      <button class="btn primario grande" onclick="confirmarModal()">💾 Salvar</button>
+    </div>`);
+}
+function excluirIngrediente(id) {
+  const ing = ingPorId(id);
+  const usos = usosDoIngrediente(id);
+  if (usos.length) {
+    return informar('Não dá para excluir ainda',
+      `<b>${esc(ing.nome)}</b> está sendo usado em: <b>${usos.map(c => esc(c.referencia)).join(', ')}</b>.<br><br>Remova-o dessas cores primeiro (ou troque por outro ingrediente).`);
+  }
+  perguntar('Excluir ingrediente?', `Excluir <b>${esc(ing.nome)}</b>?`, 'Sim, excluir', () => {
+    dados.ingredientes = dados.ingredientes.filter(i => i.id !== id); salvar(); desenhar(); aviso('Ingrediente excluído.');
+  });
+}
+
+/* ================= AJUSTES ================= */
+function telaAjustes() {
+  const caixaLista = (titulo, desc, tipo, lista) => `
+    <div class="caixa">
+      <h2>${titulo}</h2>
+      <p class="sub">${desc}</p>
+      ${lista.map((v, i) => {
+        const n = tipo === 'categorias' ? dados.ingredientes.filter(x => x.categoria === v).length : contarUnidade(v);
+        return `<div class="item-lista">
+          <div class="cresce"><strong>${esc(v)}</strong><div class="mini">em uso: ${n}</div></div>
+          <button class="btn peq" onclick="renomearItem('${tipo}', ${i})">✏️ Renomear</button>
+          <button class="btn peq perigo" onclick="removerItem('${tipo}', ${i})">🗑️ Remover</button>
+        </div>`;
+      }).join('') || '<p class="mini">Nada cadastrado.</p>'}
+      <div class="adicionar">
+        <input id="novo_${tipo}" class="campo" placeholder="Adicionar ${tipo === 'categorias' ? 'categoria' : 'unidade'}..." onkeydown="if(event.key==='Enter')adicionarItem('${tipo}')">
+        <button class="btn primario" onclick="adicionarItem('${tipo}')">+ Adicionar</button>
+      </div>
+    </div>`;
+  return `
+    <h1>Ajustes</h1>
+    <p class="sub">Aqui você organiza categorias, unidades e faz cópia de segurança.</p>
+    ${caixaLista('Categorias de ingredientes', 'Ex.: Verniz, Base, Pigmento, Solvente.', 'categorias', dados.categorias)}
+    ${caixaLista('Unidades de medida', 'Ex.: g, kg, ml, L, gotas.', 'unidades', dados.unidades)}
+    <div class="caixa">
+      <h2>💾 Cópia de segurança</h2>
+      <p class="sub">Por enquanto, os dados ficam guardados <b>somente neste computador/navegador</b>. Faça uma cópia de vez em quando e guarde em um pen drive ou e-mail. Ela também serve para passar os dados para outro computador.</p>
+      <div class="acoes">
+        <button class="btn primario" onclick="baixarCopia()">⬇️ Baixar cópia de segurança</button>
+        <label class="btn" style="cursor:pointer">⬆️ Restaurar uma cópia<input type="file" accept=".json,application/json" hidden onchange="restaurarCopia(this)"></label>
+      </div>
+      <p class="mini" style="margin-top:12px">Hoje: ${dados.cores.length} cores · ${dados.ingredientes.length} ingredientes</p>
+    </div>`;
+}
+function contarUnidade(u) {
+  let n = dados.ingredientes.filter(i => i.unidade === u).length;
+  dados.cores.forEach(c => c.itens.forEach(it => { if (it.unidade === u) n++; }));
+  return n;
+}
+function adicionarItem(tipo) {
+  const el = document.getElementById('novo_' + tipo);
+  const v = el.value.trim();
+  if (!v) return;
+  if (dados[tipo].some(x => normal(x) === normal(v))) { aviso('Isso já está na lista.', true); return; }
+  dados[tipo].push(v); salvar(); desenhar(); aviso('✅ Adicionado!');
+  document.getElementById('novo_' + tipo)?.focus();
+}
+function renomearItem(tipo, i) {
+  const antigo = dados[tipo][i];
+  acaoModal = () => {
+    const novo = document.getElementById('fRen').value.trim();
+    if (!novo) return;
+    if (novo !== antigo && dados[tipo].some(x => x === novo)) { aviso('Esse nome já existe.', true); return; }
+    dados[tipo][i] = novo;
+    if (tipo === 'categorias') dados.ingredientes.forEach(x => { if (x.categoria === antigo) x.categoria = novo; });
+    else {
+      dados.ingredientes.forEach(x => { if (x.unidade === antigo) x.unidade = novo; });
+      dados.cores.forEach(c => c.itens.forEach(it => { if (it.unidade === antigo) it.unidade = novo; }));
+    }
+    salvar(); fecharModal(); desenhar(); aviso('✅ Renomeado!');
+  };
+  abrirModal(`<h2>Renomear</h2>
+    <p class="mini">Tudo que usa "<b>${esc(antigo)}</b>" será atualizado automaticamente.</p>
+    <input id="fRen" class="campo" value="${esc(antigo)}">
+    <div class="rodape-form" style="margin-top:18px">
+      <button class="btn grande" onclick="fecharModal()">Cancelar</button>
+      <button class="btn primario grande" onclick="confirmarModal()">💾 Salvar</button>
+    </div>`);
+}
+function removerItem(tipo, i) {
+  const v = dados[tipo][i];
+  const emUso = tipo === 'categorias' ? dados.ingredientes.filter(x => x.categoria === v).length : contarUnidade(v);
+  if (emUso) return informar('Está em uso', `"<b>${esc(v)}</b>" está sendo usado ${emUso} ${emUso === 1 ? 'vez' : 'vezes'}. Troque nos ${tipo === 'categorias' ? 'ingredientes' : 'ingredientes e cores'} antes de remover — ou use <b>Renomear</b>.`);
+  perguntar('Remover?', `Remover "<b>${esc(v)}</b>" da lista?`, 'Sim, remover', () => {
+    dados[tipo].splice(i, 1); salvar(); desenhar(); aviso('Removido.');
+  });
+}
+function baixarCopia() {
+  const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  a.href = URL.createObjectURL(blob);
+  a.download = `metaliza-cores-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  aviso('⬇️ Cópia baixada!');
+}
+function restaurarCopia(input) {
+  const arq = input.files[0];
+  input.value = '';
+  if (!arq) return;
+  const leitor = new FileReader();
+  leitor.onload = () => {
+    let novo;
+    try { novo = JSON.parse(leitor.result); } catch (e) { return informar('Arquivo inválido', 'Esse arquivo não é uma cópia de segurança do Metaliza Cores.'); }
+    if (!novo || !Array.isArray(novo.cores) || !Array.isArray(novo.ingredientes)) return informar('Arquivo inválido', 'Esse arquivo não é uma cópia de segurança do Metaliza Cores.');
+    perguntar('Restaurar cópia?', `A cópia tem <b>${novo.cores.length} cores</b> e <b>${novo.ingredientes.length} ingredientes</b>.<br><br>Os dados atuais deste computador serão <b>substituídos</b>.`, 'Sim, restaurar', () => {
+      dados = novo; arrumar(); salvar(); desenhar(); aviso('✅ Cópia restaurada!');
+    });
+  };
+  leitor.readAsText(arq);
+}
+
+/* ================= INÍCIO ================= */
+carregar();
+if (podeSalvar) salvar();
+desenhar();
+</script>
+</body>
+</html>
