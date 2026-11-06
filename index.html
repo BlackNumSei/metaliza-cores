@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Metaliza · Cadastro de Cores</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="icon" href="logo.webp" type="image/webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -139,74 +140,56 @@
     .nova{background:none}
     .so-impressao{display:block;color:#555;margin-top:20px;font-size:10pt}
   }
+  .btn[hidden]{display:none}
+  body.ocupado,body.ocupado *{cursor:progress!important}
+  .topo-in .sair{margin-left:auto}
+  .login{max-width:420px;margin:24px auto 0}
+  .login-logo{width:88px;height:88px;border-radius:22px;display:block;margin:0 auto 18px;box-shadow:var(--sombra)}
+  .login .campo{width:100%}
+  .erro-login{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--perigo-suave);color:var(--perigo);font-weight:600}
+  .carregando{text-align:center;color:var(--suave);padding:60px 20px}
 </style>
 </head>
 <body>
 <header class="topo">
   <div class="topo-in">
-    <button class="marca" onclick="irAba('cores')" title="Início"><img src="logo.webp" alt="">Metaliza</button>
+    <button class="marca" onclick="if(sessao)irAba('cores')" title="Início"><img src="logo.webp" alt="">Metaliza</button>
+    <button id="btnSair" class="btn peq sair" onclick="sair()" hidden>Sair</button>
   </div>
 </header>
 <main>
-  <nav class="abas">
+  <nav class="abas" id="abas" style="display:none">
     <button class="aba" data-aba="cores" onclick="irAba('cores')">Cores</button>
     <button class="aba" data-aba="ingredientes" onclick="irAba('ingredientes')">Ingredientes</button>
     <button class="aba" data-aba="ajustes" onclick="irAba('ajustes')">Ajustes</button>
   </nav>
-  <div id="app"></div>
+  <div id="app"><div class="carregando">Carregando...</div></div>
 </main>
 <div id="modal" class="modal-fundo" hidden onclick="if(event.target===this)fecharModal()"><div class="modal" id="modalCaixa"></div></div>
 <div id="aviso" class="aviso" hidden></div>
 
 <script>
-/* ================= DADOS ================= */
-const CHAVE = 'metaliza-cores-v1';
+/* ================= CONFIGURAÇÃO ================= */
+// Chave pública do Supabase (pode ficar no site). A proteção dos dados é feita
+// no banco: só o login autorizado consegue ler ou alterar qualquer coisa.
+const SUPABASE_URL = 'https://tqlvzlzeddnznqbqzcpw.supabase.co';
+const SUPABASE_CHAVE = 'sb_publishable_otUe1xc7YIXR1bkj-gF8ug_IxY2JvpC';
+const CHAVE_LOCAL = 'metaliza-cores-v1';      // dados antigos, de quando tudo ficava só no navegador
+const CHAVE_EMAIL = 'metaliza-cores-email';   // lembra o e-mail do login neste computador
+
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const vazio = () => ({ categorias: [], unidades: [], ingredientes: [], cores: [] });
 
-function dadosIniciais() {
-  return {
-    categorias: ['Verniz', 'Base', 'Pigmento', 'Solvente', 'Outros'],
-    unidades: ['g', 'kg', 'ml', 'L', 'gotas'],
-    ingredientes: [],
-    cores: []
-  };
-}
-
-let dados;
-let podeSalvar = true;
-
-function carregar() {
-  try {
-    const txt = localStorage.getItem(CHAVE);
-    dados = txt ? JSON.parse(txt) : dadosIniciais();
-  } catch (e) {
-    podeSalvar = false;
-    dados = dadosIniciais();
-  }
-  arrumar();
-}
-function arrumar() {
-  dados.categorias = Array.isArray(dados.categorias) ? dados.categorias : [];
-  dados.unidades = Array.isArray(dados.unidades) ? dados.unidades : [];
-  dados.ingredientes = Array.isArray(dados.ingredientes) ? dados.ingredientes : [];
-  dados.cores = Array.isArray(dados.cores) ? dados.cores : [];
-  dados.cores.forEach(c => { c.itens = Array.isArray(c.itens) ? c.itens : []; });
-  // remove a cor de exemplo da primeira versão
-  dados.cores = dados.cores.filter(c => !(c.referencia === 'EXEMPLO-001' && /pode apagar/.test(c.nome || '')));
-}
-function salvar() {
-  try {
-    localStorage.setItem(CHAVE, JSON.stringify(dados));
-    podeSalvar = true;
-  } catch (e) {
-    podeSalvar = false;
-    aviso('Atenção: não foi possível salvar neste navegador!', true);
-  }
-}
+let sb = null;
+let sessao = null;
+let dados = vazio();
+let carregado = false;
+let erroCarga = '';
+let ultimaCarga = 0;
 
 /* ================= UTILIDADES ================= */
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const normal = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const normal = s => String(s ?? '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const lerNum = s => { const n = parseFloat(String(s ?? '').trim().replace(',', '.')); return isFinite(n) ? n : NaN; };
 const fmt = (n, casas = 3) => isFinite(n) ? Number(n).toLocaleString('pt-BR', { maximumFractionDigits: casas }) : '';
 const ingPorId = id => dados.ingredientes.find(i => i.id === id);
@@ -214,6 +197,9 @@ const corPorId = id => dados.cores.find(c => c.id === id);
 const ordenar = arr => arr.slice().sort((a, b) => String(a).localeCompare(String(b), 'pt-BR', { numeric: true, sensitivity: 'base' }));
 const copia = o => JSON.parse(JSON.stringify(o));
 const dataBR = t => t ? new Date(t).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+const lerLocal = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const gravarLocal = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { } };
+const modalAberto = () => !document.getElementById('modal').hidden;
 
 let tempoAviso;
 function aviso(msg, erro = false) {
@@ -222,7 +208,62 @@ function aviso(msg, erro = false) {
   el.className = 'aviso' + (erro ? ' erro' : '');
   el.hidden = false;
   clearTimeout(tempoAviso);
-  tempoAviso = setTimeout(() => el.hidden = true, erro ? 5000 : 2500);
+  tempoAviso = setTimeout(() => el.hidden = true, erro ? 6000 : 2500);
+}
+
+/* ================= BANCO DE DADOS ================= */
+async function q(consulta) {
+  const { data, error } = await consulta;
+  if (error) throw error;
+  return data;
+}
+async function todos(tabela, colunas, ordem) {
+  let saida = [];
+  for (let de = 0; ; de += 1000) {
+    const parte = await q(sb.from(tabela).select(colunas).order(ordem).range(de, de + 999));
+    saida = saida.concat(parte);
+    if (parte.length < 1000) break;
+  }
+  return saida;
+}
+const paraLinha = c => ({
+  id: c.id, referencia: c.referencia, nome: c.nome || '', hex: c.hex || '', obs: c.obs || '',
+  itens: c.itens || [], atualizado: new Date(c.atualizado || Date.now()).toISOString()
+});
+const daLinha = r => ({
+  id: r.id, referencia: r.referencia, nome: r.nome, hex: r.hex, obs: r.obs,
+  itens: Array.isArray(r.itens) ? r.itens : [], atualizado: Date.parse(r.atualizado)
+});
+async function carregarTudo() {
+  const [cat, uni, ing, cor] = await Promise.all([
+    todos('categorias', 'nome', 'criado'),
+    todos('unidades', 'nome', 'criado'),
+    todos('ingredientes', 'id,nome,categoria,unidade', 'id'),
+    todos('cores', '*', 'id')
+  ]);
+  dados = { categorias: cat.map(x => x.nome), unidades: uni.map(x => x.nome), ingredientes: ing, cores: cor.map(daLinha) };
+  carregado = true;
+  ultimaCarga = Date.now();
+}
+async function emLotes(tabela, linhas, tamanho = 300) {
+  for (let i = 0; i < linhas.length; i += tamanho) await q(sb.from(tabela).insert(linhas.slice(i, i + tamanho)));
+}
+
+let ocupado = false;
+async function tentar(fn, msgOk) {
+  if (ocupado) return false;
+  ocupado = true; document.body.classList.add('ocupado');
+  try { await fn(); if (msgOk) aviso(msgOk); return true; }
+  catch (e) { console.error(e); aviso(traduzir(e), true); return false; }
+  finally { ocupado = false; document.body.classList.remove('ocupado'); }
+}
+function traduzir(e) {
+  const m = String(e?.message || e || '');
+  if (e?.code === '23505') return 'Já existe um cadastro com esse nome ou referência.';
+  if (e?.code === '42501' || /row-level security|permission denied/i.test(m)) return 'Este login não tem permissão. Fale com o responsável pelo sistema.';
+  if (/failed to fetch|network|load failed|fetch/i.test(m)) return 'Sem conexão com a internet. Verifique e tente de novo.';
+  if (/jwt|token|session/i.test(m)) return 'Sua sessão expirou. Saia e entre novamente.';
+  return 'Não foi possível concluir: ' + m;
 }
 
 /* ================= MODAL ================= */
@@ -250,39 +291,119 @@ function informar(titulo, texto) {
     <div class="rodape-form"><button class="btn primario grande" onclick="fecharModal()">Entendi</button></div>`);
 }
 document.addEventListener('keydown', e => {
-  if (document.getElementById('modal').hidden) return;
+  if (!modalAberto()) return;
   if (e.key === 'Escape') fecharModal();
-  if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); confirmarModal(); }
+  if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') { e.preventDefault(); confirmarModal(); }
 });
 
+/* ================= LOGIN ================= */
+function telaLogin() {
+  return `
+    <div class="login">
+      <img src="logo.webp" alt="Metaliza" class="login-logo">
+      <p class="sobre" style="text-align:center">Laboratório · Cores</p>
+      <h1 style="text-align:center;margin-bottom:22px">Entrar no sistema</h1>
+      <form class="caixa" onsubmit="entrar(event)">
+        <label class="rot" style="margin-top:0">E-mail</label>
+        <input id="lEmail" class="campo" type="email" autocomplete="username" required value="${esc(lerLocal(CHAVE_EMAIL) || '')}">
+        <label class="rot">Senha</label>
+        <input id="lSenha" class="campo" type="password" autocomplete="current-password" required>
+        <div id="lErro" class="erro-login" hidden></div>
+        <button id="lBotao" class="btn primario grande" style="width:100%;margin-top:20px">Entrar</button>
+      </form>
+    </div>`;
+}
+async function entrar(ev) {
+  ev.preventDefault();
+  const email = document.getElementById('lEmail').value.trim();
+  const senha = document.getElementById('lSenha').value;
+  const botao = document.getElementById('lBotao');
+  const erro = document.getElementById('lErro');
+  erro.hidden = true;
+  botao.disabled = true; botao.textContent = 'Entrando...';
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
+    if (error) throw error;
+    gravarLocal(CHAVE_EMAIL, email);
+    sessao = data.session;
+    await iniciarApp();
+  } catch (e) {
+    erro.textContent = /invalid login|invalid credentials/i.test(e?.message || '') ? 'E-mail ou senha incorretos.' : traduzir(e);
+    erro.hidden = false;
+    botao.disabled = false; botao.textContent = 'Entrar';
+  }
+}
+function sair() {
+  if (tela.modo === 'editar') return sairDaEdicao(() => sair());
+  perguntar('Sair do sistema?', 'Para entrar de novo será preciso digitar a senha.', 'Sair', async () => {
+    await sb.auth.signOut().catch(() => { });
+    sessao = null; dados = vazio(); carregado = false;
+    tela = telaInicial(); desenhar();
+  }, false);
+}
+async function iniciarApp() {
+  carregado = false; erroCarga = '';
+  desenhar();
+  try { await carregarTudo(); } catch (e) { console.error(e); erroCarga = traduzir(e); }
+  desenhar();
+  if (!erroCarga) oferecerDadosAntigos();
+}
+
 /* ================= NAVEGAÇÃO ================= */
-let tela = { aba: 'cores', modo: 'lista', corId: null, busca: '', buscaIng: '', rascunho: null, baseIdx: 0, fator: 1 };
+const telaInicial = () => ({ aba: 'cores', modo: 'lista', corId: null, busca: '', buscaIng: '', rascunho: null, baseIdx: 0, fator: 1 });
+let tela = telaInicial();
 
 function irAba(aba) {
-  if (tela.modo === 'editar' && !sairDaEdicao(() => irAba(aba))) return;
+  if (tela.modo === 'editar') return sairDaEdicao(() => irAba(aba));
   tela.aba = aba; tela.modo = 'lista'; tela.corId = null;
   desenhar(); window.scrollTo(0, 0);
 }
 function sairDaEdicao(continuar) {
   perguntar('Sair sem salvar?', 'As alterações feitas nesta cor serão perdidas.', 'Sair sem salvar', () => { tela.modo = 'lista'; tela.rascunho = null; continuar(); });
-  return false;
 }
 
 function desenhar() {
-  document.querySelectorAll('.aba').forEach(b => b.classList.toggle('ativa', b.dataset.aba === tela.aba));
   const app = document.getElementById('app');
-  const faixa = podeSalvar ? '' : '<div class="faixa"><b>Atenção:</b> este navegador não está permitindo salvar. O que for feito agora pode se perder ao fechar a página.</div>';
-  if (tela.aba === 'cores') {
-    if (tela.modo === 'ver') app.innerHTML = faixa + telaDetalhe();
-    else if (tela.modo === 'editar') app.innerHTML = faixa + telaEditar();
-    else { app.innerHTML = faixa + telaListaCores(); ligarBuscaCores(); }
-  } else if (tela.aba === 'ingredientes') {
-    app.innerHTML = faixa + telaIngredientes(); ligarBuscaIng();
-  } else {
-    app.innerHTML = faixa + telaAjustes();
+  const logado = !!sessao;
+  document.getElementById('abas').style.display = logado ? '' : 'none';
+  document.getElementById('btnSair').hidden = !logado;
+  if (!logado) {
+    app.innerHTML = telaLogin();
+    const email = document.getElementById('lEmail');
+    setTimeout(() => (email.value ? document.getElementById('lSenha') : email).focus(), 30);
+    return;
   }
-  if (tela.modo === 'ver') ligarRecalculo();
+  document.querySelectorAll('.aba').forEach(b => b.classList.toggle('ativa', b.dataset.aba === tela.aba));
+  if (erroCarga) {
+    app.innerHTML = `<div class="faixa"><b>Não foi possível carregar os dados.</b><br>${esc(erroCarga)}</div>
+      <button class="btn primario grande" onclick="iniciarApp()">Tentar de novo</button>`;
+    return;
+  }
+  if (!carregado) { app.innerHTML = '<div class="carregando">Carregando as cores...</div>'; return; }
+  if (tela.aba === 'cores') {
+    if (tela.modo === 'ver') { app.innerHTML = telaDetalhe(); ligarRecalculo(); }
+    else if (tela.modo === 'editar') app.innerHTML = telaEditar();
+    else { app.innerHTML = telaListaCores(); ligarBuscaCores(); }
+  } else if (tela.aba === 'ingredientes') {
+    app.innerHTML = telaIngredientes(); ligarBuscaIng();
+  } else {
+    app.innerHTML = telaAjustes();
+  }
 }
+
+// Quando a pessoa volta para a página, busca as novidades (ex.: alterações feitas em outro computador)
+async function atualizarSeVoltou() {
+  if (!sessao || !carregado || ocupado || tela.modo === 'editar' || modalAberto()) return;
+  if (Date.now() - ultimaCarga < 20000) return;
+  try {
+    await carregarTudo();
+    const foco = document.activeElement;
+    if (tela.modo === 'editar' || modalAberto() || (foco && /INPUT|TEXTAREA|SELECT/.test(foco.tagName))) return;
+    desenhar();
+  } catch (e) { console.error(e); }
+}
+window.addEventListener('focus', atualizarSeVoltou);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) atualizarSeVoltou(); });
 
 /* ================= CORES: LISTA ================= */
 function telaListaCores() {
@@ -354,7 +475,7 @@ function telaDetalhe() {
       <h2>Fazer outra quantidade</h2>
       <div class="linha">
         <span>Vou usar</span>
-        <input id="baseValor" class="campo num" inputmode="decimal" value="${fmt(base.qtd * tela.fator)}">
+        <input id="baseValor" class="campo num" inputmode="decimal" value="${fmt(base.qtd * tela.fator, 2)}">
         <span id="baseUnidade"><b>${esc(base.unidade)}</b></span>
         <span>de</span>
         <select id="baseIng" class="campo">
@@ -362,7 +483,7 @@ function telaDetalhe() {
         </select>
       </div>
       <div class="linha" style="margin-top:12px">
-        ${[[0.5,'Metade'],[1,'Original'],[2,'× 2'],[3,'× 3'],[5,'× 5']].map(([f,t]) => `<button class="pilula ${Math.abs(tela.fator - f) < 1e-9 ? 'ativa' : ''}" data-fator="${f}" onclick="definirFator(${f})">${t}</button>`).join('')}
+        ${[[0.5, 'Metade'], [1, 'Original'], [2, '× 2'], [3, '× 3'], [5, '× 5']].map(([f, t]) => `<button class="pilula ${Math.abs(tela.fator - f) < 1e-9 ? 'ativa' : ''}" data-fator="${f}" onclick="definirFator(${f})">${t}</button>`).join('')}
       </div>
     </div>` : ''}
 
@@ -381,7 +502,7 @@ function tabelaFormula(c) {
     <tbody>${c.itens.map(it => {
       const ing = ingPorId(it.ingredienteId);
       return `<tr>
-        <td><b style="font-size:19px">${esc(ing?.nome || '(ingrediente removido)')}</b>${ing?.categoria ? ` <span class="tag">${esc(ing.categoria)}</span>` : ''}</td>
+        <td><b style="font-size:18px">${esc(ing?.nome || '(ingrediente removido)')}</b>${ing?.categoria ? ` <span class="tag">${esc(ing.categoria)}</span>` : ''}</td>
         <td class="num ${mudou ? '' : 'qtd'}">${fmt(it.qtd)} ${esc(it.unidade)}</td>
         ${mudou ? `<td class="num qtd nova">${fmt(it.qtd * tela.fator, 2)} ${esc(it.unidade)}</td>` : ''}
       </tr>`;
@@ -395,8 +516,8 @@ function ligarRecalculo() {
   val.addEventListener('input', () => {
     const n = lerNum(val.value);
     const base = c.itens[tela.baseIdx];
-    if (isFinite(n) && n > 0 && base.qtd > 0) { tela.fator = n / base.qtd; }
-    else if (val.value.trim() === '') { tela.fator = 1; }
+    if (isFinite(n) && n > 0 && base.qtd > 0) tela.fator = n / base.qtd;
+    else if (val.value.trim() === '') tela.fator = 1;
     document.getElementById('tabelaFormula').innerHTML = tabelaFormula(c);
     marcarPilulas();
   });
@@ -418,34 +539,40 @@ function definirFator(f) {
 function marcarPilulas() {
   document.querySelectorAll('.pilula[data-fator]').forEach(b => b.classList.toggle('ativa', Math.abs(tela.fator - +b.dataset.fator) < 1e-9));
 }
-function duplicarCor(id) {
+async function duplicarCor(id) {
   const c = corPorId(id);
   const nova = copia(c);
   nova.id = uid();
-  nova.referencia = c.referencia + ' (cópia)';
+  let ref = c.referencia + ' (cópia)', n = 2;
+  while (dados.cores.some(x => normal(x.referencia) === normal(ref))) ref = `${c.referencia} (cópia ${n++})`;
+  nova.referencia = ref;
   nova.atualizado = Date.now();
-  dados.cores.push(nova); salvar();
+  const ok = await tentar(() => q(sb.from('cores').insert(paraLinha(nova))));
+  if (!ok) return;
+  dados.cores.push(nova);
   aviso('Cópia criada. Agora ajuste o que precisar.');
   editarCor(nova.id);
 }
 function excluirCor(id) {
   const c = corPorId(id);
-  perguntar('Excluir cor?', `Tem certeza que deseja excluir a cor <b>${esc(c.referencia)}</b>? Isso não pode ser desfeito.`, 'Sim, excluir', () => {
-    dados.cores = dados.cores.filter(x => x.id !== id); salvar();
-    tela.modo = 'lista'; desenhar(); aviso('Cor excluída.');
-  });
+  perguntar('Excluir cor?', `Tem certeza que deseja excluir a cor <b>${esc(c.referencia)}</b>? Isso não pode ser desfeito.`, 'Sim, excluir', () => tentar(async () => {
+    await q(sb.from('cores').delete().eq('id', id));
+    dados.cores = dados.cores.filter(x => x.id !== id);
+    tela.modo = 'lista'; desenhar();
+  }, 'Cor excluída.'));
 }
 
 /* ================= CORES: EDITAR ================= */
+function linhaVazia() { return { ingredienteId: '', qtd: '', unidade: dados.unidades[0] || 'g' }; }
 function novaCor() {
-  tela.rascunho = { id: null, referencia: '', nome: '', hex: '', obs: '', itens: [{ ingredienteId: '', qtd: '', unidade: dados.unidades[0] || 'g' }] };
+  tela.rascunho = { id: null, referencia: '', nome: '', hex: '', obs: '', itens: [linhaVazia()] };
   tela.modo = 'editar'; desenhar(); window.scrollTo(0, 0);
 }
 function editarCor(id) {
   const c = corPorId(id);
   tela.rascunho = copia(c);
   tela.rascunho.itens = tela.rascunho.itens.map(it => ({ ...it, qtd: fmt(it.qtd) }));
-  if (!tela.rascunho.itens.length) tela.rascunho.itens.push({ ingredienteId: '', qtd: '', unidade: dados.unidades[0] || 'g' });
+  if (!tela.rascunho.itens.length) tela.rascunho.itens.push(linhaVazia());
   tela.modo = 'editar'; desenhar(); window.scrollTo(0, 0);
 }
 function opcoesIngredientes(selecionado) {
@@ -454,7 +581,7 @@ function opcoesIngredientes(selecionado) {
   const grupos = ordenar(Object.keys(porCat)).map(cat => `<optgroup label="${esc(cat)}">${porCat[cat]
     .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
     .map(i => `<option value="${i.id}" ${i.id === selecionado ? 'selected' : ''}>${esc(i.nome)}</option>`).join('')}</optgroup>`).join('');
-  return `<option value="">— escolha —</option>${grupos}<option value="__novo">➕ Cadastrar novo ingrediente...</option>`;
+  return `<option value="">— escolha —</option>${grupos}<option value="__novo">+ Cadastrar novo ingrediente...</option>`;
 }
 function opcoesUnidades(sel) {
   const lista = dados.unidades.slice();
@@ -503,10 +630,10 @@ function telaEditar() {
     </div>`;
 }
 function adicionarLinha() {
-  tela.rascunho.itens.push({ ingredienteId: '', qtd: '', unidade: dados.unidades[0] || 'g' });
+  tela.rascunho.itens.push(linhaVazia());
   desenhar();
-  const linhas = document.querySelectorAll('.linha-ing select');
-  if (linhas.length) linhas[linhas.length - 2]?.focus();
+  const linhas = document.querySelectorAll('.linha-ing');
+  linhas[linhas.length - 1]?.querySelector('select')?.focus();
 }
 function removerLinha(i) { tela.rascunho.itens.splice(i, 1); desenhar(); }
 function mudarIngrediente(i, sel) {
@@ -528,26 +655,26 @@ function cancelarEdicao() {
     desenhar();
   });
 }
-function salvarCor() {
+async function salvarCor() {
   const r = tela.rascunho;
   const ref = r.referencia.trim();
   if (!ref) return informar('Falta a referência', 'Preencha o campo <b>Referência</b> antes de salvar.');
-  const repetida = dados.cores.find(c => c.id !== r.id && normal(c.referencia.trim()) === normal(ref));
+  const repetida = dados.cores.find(c => c.id !== r.id && normal(c.referencia) === normal(ref));
   if (repetida) return informar('Referência já existe', `Já existe uma cor com a referência <b>${esc(repetida.referencia)}</b>. Use outra referência.`);
   const itens = [];
   for (let i = 0; i < r.itens.length; i++) {
     const it = r.itens[i];
-    const vazio = !it.ingredienteId && String(it.qtd).trim() === '';
-    if (vazio) continue;
+    if (!it.ingredienteId && String(it.qtd).trim() === '') continue;
     if (!it.ingredienteId) return informar('Falta o ingrediente', `Na linha ${i + 1}, escolha qual é o ingrediente (ou remova a linha com o ×).`);
     const n = lerNum(it.qtd);
     if (!isFinite(n) || n < 0) return informar('Quantidade inválida', `Na linha ${i + 1} (<b>${esc(ingPorId(it.ingredienteId)?.nome)}</b>), digite a quantidade em números. Ex.: 15 ou 2,5`);
     itens.push({ ingredienteId: it.ingredienteId, qtd: n, unidade: it.unidade });
   }
   const cor = { id: r.id || uid(), referencia: ref, nome: r.nome.trim(), hex: r.hex || '', obs: (r.obs || '').trim(), itens, atualizado: Date.now() };
+  const ok = await tentar(() => q(sb.from('cores').upsert(paraLinha(cor))));
+  if (!ok) return;
   const idx = dados.cores.findIndex(c => c.id === cor.id);
   if (idx >= 0) dados.cores[idx] = cor; else dados.cores.push(cor);
-  salvar();
   tela.rascunho = null; tela.modo = 'ver'; tela.corId = cor.id; tela.fator = 1; tela.baseIdx = 0;
   desenhar(); window.scrollTo(0, 0);
   aviso('Cor salva!');
@@ -592,21 +719,32 @@ function ligarBuscaIng() {
 }
 function formIngrediente(id, depois) {
   const ing = id ? ingPorId(id) : { nome: '', categoria: '', unidade: dados.unidades[0] || '' };
-  acaoModal = () => {
+  acaoModal = () => tentar(async () => {
     const nome = document.getElementById('fNome').value.trim();
-    const categoria = document.getElementById('fCat').value.trim();
-    const unidade = document.getElementById('fUni').value.trim();
+    let categoria = document.getElementById('fCat').value.trim();
+    let unidade = document.getElementById('fUni').value.trim();
     if (!nome) { aviso('Digite o nome do ingrediente.', true); return; }
-    const repetido = dados.ingredientes.find(i => i.id !== id && normal(i.nome) === normal(nome) && normal(i.categoria) === normal(categoria));
-    if (repetido) { aviso('Já existe um ingrediente com esse nome nessa categoria.', true); return; }
-    if (categoria && !dados.categorias.some(c => normal(c) === normal(categoria))) dados.categorias.push(categoria);
-    if (unidade && !dados.unidades.includes(unidade)) dados.unidades.push(unidade);
+    categoria = dados.categorias.find(c => normal(c) === normal(categoria)) || categoria;
+    unidade = dados.unidades.find(u => u === unidade) || dados.unidades.find(u => normal(u) === normal(unidade)) || unidade;
+    if (dados.ingredientes.some(i => i.id !== id && normal(i.nome) === normal(nome) && normal(i.categoria) === normal(categoria))) {
+      aviso('Já existe um ingrediente com esse nome nessa categoria.', true); return;
+    }
+    if (categoria && !dados.categorias.includes(categoria)) {
+      await q(sb.from('categorias').upsert({ nome: categoria }, { onConflict: 'nome', ignoreDuplicates: true }));
+      dados.categorias.push(categoria);
+    }
+    if (unidade && !dados.unidades.includes(unidade)) {
+      await q(sb.from('unidades').upsert({ nome: unidade }, { onConflict: 'nome', ignoreDuplicates: true }));
+      dados.unidades.push(unidade);
+    }
+    const linha = { id: id || uid(), nome, categoria, unidade };
+    await q(sb.from('ingredientes').upsert(linha));
     let salvo;
-    if (id) { salvo = ingPorId(id); Object.assign(salvo, { nome, categoria, unidade }); }
-    else { salvo = { id: uid(), nome, categoria, unidade }; dados.ingredientes.push(salvo); }
-    salvar(); fecharModal(); aviso('Ingrediente salvo!');
+    if (id) { salvo = ingPorId(id); Object.assign(salvo, linha); }
+    else { salvo = linha; dados.ingredientes.push(salvo); }
+    fecharModal(); aviso('Ingrediente salvo!');
     depois && depois(salvo);
-  };
+  });
   abrirModal(`
     <h2>${id ? 'Editar ingrediente' : 'Novo ingrediente'}</h2>
     <label class="rot">Nome *</label>
@@ -630,9 +768,11 @@ function excluirIngrediente(id) {
     return informar('Não dá para excluir ainda',
       `<b>${esc(ing.nome)}</b> está sendo usado em: <b>${usos.map(c => esc(c.referencia)).join(', ')}</b>.<br><br>Remova-o dessas cores primeiro (ou troque por outro ingrediente).`);
   }
-  perguntar('Excluir ingrediente?', `Excluir <b>${esc(ing.nome)}</b>?`, 'Sim, excluir', () => {
-    dados.ingredientes = dados.ingredientes.filter(i => i.id !== id); salvar(); desenhar(); aviso('Ingrediente excluído.');
-  });
+  perguntar('Excluir ingrediente?', `Excluir <b>${esc(ing.nome)}</b>?`, 'Sim, excluir', () => tentar(async () => {
+    await q(sb.from('ingredientes').delete().eq('id', id));
+    dados.ingredientes = dados.ingredientes.filter(i => i.id !== id);
+    desenhar();
+  }, 'Ingrediente excluído.'));
 }
 
 /* ================= AJUSTES ================= */
@@ -657,12 +797,21 @@ function telaAjustes() {
   return `
     <p class="sobre">Laboratório · Configurações</p>
     <h1>Ajustes</h1>
-    <p class="sub">Aqui você organiza categorias, unidades e faz cópia de segurança.</p>
+    <p class="sub">Aqui você organiza categorias, unidades, a senha e a cópia de segurança.</p>
     ${caixaLista('Categorias de ingredientes', 'Ex.: Verniz, Base, Pigmento, Solvente.', 'categorias', dados.categorias)}
     ${caixaLista('Unidades de medida', 'Ex.: g, kg, ml, L, gotas.', 'unidades', dados.unidades)}
     <div class="caixa">
+      <h2>Senha de acesso</h2>
+      <p class="sub">Conectado como <b>${esc(sessao?.user?.email || '')}</b>. Ao trocar a senha, avise quem usa o sistema.</p>
+      <div class="form-grade">
+        <div><label class="rot" style="margin-top:0">Nova senha</label><input id="s1" type="password" class="campo" style="width:100%" autocomplete="new-password"></div>
+        <div><label class="rot" style="margin-top:0">Repita a nova senha</label><input id="s2" type="password" class="campo" style="width:100%" autocomplete="new-password"></div>
+      </div>
+      <div class="rodape-form" style="margin-top:16px"><button class="btn primario" onclick="trocarSenha()">Trocar senha</button></div>
+    </div>
+    <div class="caixa">
       <h2>Cópia de segurança</h2>
-      <div class="faixa"><b>Atenção:</b> por enquanto, os dados ficam guardados <b>somente neste computador/navegador</b>. Faça uma cópia de vez em quando e guarde em um pen drive ou e-mail. Ela também serve para passar os dados para outro computador.</div>
+      <p class="sub">Os dados ficam guardados no sistema online. Mesmo assim, é bom baixar uma cópia de vez em quando (por exemplo, uma vez por mês) e guardar em um pen drive ou e-mail.</p>
       <div class="acoes">
         <button class="btn primario" onclick="baixarCopia()">Baixar cópia de segurança</button>
         <label class="btn" style="cursor:pointer">Restaurar uma cópia<input type="file" accept=".json,application/json" hidden onchange="restaurarCopia(this)"></label>
@@ -679,24 +828,33 @@ function adicionarItem(tipo) {
   const el = document.getElementById('novo_' + tipo);
   const v = el.value.trim();
   if (!v) return;
-  if (dados[tipo].some(x => normal(x) === normal(v))) { aviso('Isso já está na lista.', true); return; }
-  dados[tipo].push(v); salvar(); desenhar(); aviso('Adicionado!');
-  document.getElementById('novo_' + tipo)?.focus();
+  if (dados[tipo].some(x => tipo === 'unidades' ? x === v : normal(x) === normal(v))) { aviso('Isso já está na lista.', true); return; }
+  tentar(async () => {
+    await q(sb.from(tipo).insert({ nome: v }));
+    dados[tipo].push(v); desenhar();
+    document.getElementById('novo_' + tipo)?.focus();
+  }, 'Adicionado!');
 }
 function renomearItem(tipo, i) {
   const antigo = dados[tipo][i];
-  acaoModal = () => {
+  acaoModal = () => tentar(async () => {
     const novo = document.getElementById('fRen').value.trim();
-    if (!novo) return;
-    if (novo !== antigo && dados[tipo].some(x => x === novo)) { aviso('Esse nome já existe.', true); return; }
-    dados[tipo][i] = novo;
-    if (tipo === 'categorias') dados.ingredientes.forEach(x => { if (x.categoria === antigo) x.categoria = novo; });
-    else {
+    if (!novo || novo === antigo) { fecharModal(); return; }
+    if (dados[tipo].some(x => x === novo)) { aviso('Esse nome já existe.', true); return; }
+    await q(sb.from(tipo).update({ nome: novo }).eq('nome', antigo));
+    if (tipo === 'categorias') {
+      await q(sb.from('ingredientes').update({ categoria: novo }).eq('categoria', antigo));
+      dados.ingredientes.forEach(x => { if (x.categoria === antigo) x.categoria = novo; });
+    } else {
+      await q(sb.from('ingredientes').update({ unidade: novo }).eq('unidade', antigo));
       dados.ingredientes.forEach(x => { if (x.unidade === antigo) x.unidade = novo; });
-      dados.cores.forEach(c => c.itens.forEach(it => { if (it.unidade === antigo) it.unidade = novo; }));
+      const afetadas = dados.cores.filter(c => c.itens.some(it => it.unidade === antigo));
+      afetadas.forEach(c => c.itens.forEach(it => { if (it.unidade === antigo) it.unidade = novo; }));
+      if (afetadas.length) await q(sb.from('cores').upsert(afetadas.map(paraLinha)));
     }
-    salvar(); fecharModal(); desenhar(); aviso('Renomeado!');
-  };
+    dados[tipo][i] = novo;
+    fecharModal(); desenhar(); aviso('Renomeado!');
+  });
   abrirModal(`<h2>Renomear</h2>
     <p class="mini">Tudo que usa "<b>${esc(antigo)}</b>" será atualizado automaticamente.</p>
     <input id="fRen" class="campo" value="${esc(antigo)}">
@@ -709,9 +867,20 @@ function removerItem(tipo, i) {
   const v = dados[tipo][i];
   const emUso = tipo === 'categorias' ? dados.ingredientes.filter(x => x.categoria === v).length : contarUnidade(v);
   if (emUso) return informar('Está em uso', `"<b>${esc(v)}</b>" está sendo usado ${emUso} ${emUso === 1 ? 'vez' : 'vezes'}. Troque nos ${tipo === 'categorias' ? 'ingredientes' : 'ingredientes e cores'} antes de remover — ou use <b>Renomear</b>.`);
-  perguntar('Remover?', `Remover "<b>${esc(v)}</b>" da lista?`, 'Sim, remover', () => {
-    dados[tipo].splice(i, 1); salvar(); desenhar(); aviso('Removido.');
-  });
+  perguntar('Remover?', `Remover "<b>${esc(v)}</b>" da lista?`, 'Sim, remover', () => tentar(async () => {
+    await q(sb.from(tipo).delete().eq('nome', v));
+    dados[tipo] = dados[tipo].filter(x => x !== v); desenhar();
+  }, 'Removido.'));
+}
+async function trocarSenha() {
+  const s1 = document.getElementById('s1').value, s2 = document.getElementById('s2').value;
+  if (s1.length < 8) return informar('Senha muito curta', 'Use pelo menos <b>8 caracteres</b>.');
+  if (s1 !== s2) return informar('As senhas não conferem', 'Digite a mesma senha nos dois campos.');
+  const ok = await tentar(async () => {
+    const { error } = await sb.auth.updateUser({ password: s1 });
+    if (error) throw error;
+  }, 'Senha trocada!');
+  if (ok) { document.getElementById('s1').value = ''; document.getElementById('s2').value = ''; }
 }
 function baixarCopia() {
   const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
@@ -731,19 +900,119 @@ function restaurarCopia(input) {
   const leitor = new FileReader();
   leitor.onload = () => {
     let novo;
-    try { novo = JSON.parse(leitor.result); } catch (e) { return informar('Arquivo inválido', 'Esse arquivo não é uma cópia de segurança do Metaliza Cores.'); }
+    try { novo = JSON.parse(leitor.result); } catch (e) { novo = null; }
     if (!novo || !Array.isArray(novo.cores) || !Array.isArray(novo.ingredientes)) return informar('Arquivo inválido', 'Esse arquivo não é uma cópia de segurança do Metaliza Cores.');
-    perguntar('Restaurar cópia?', `A cópia tem <b>${novo.cores.length} cores</b> e <b>${novo.ingredientes.length} ingredientes</b>.<br><br>Os dados atuais deste computador serão <b>substituídos</b>.`, 'Sim, restaurar', () => {
-      dados = novo; arrumar(); salvar(); desenhar(); aviso('Cópia restaurada!');
-    });
+    perguntar('Restaurar cópia?', `A cópia tem <b>${novo.cores.length} cores</b> e <b>${novo.ingredientes.length} ingredientes</b>.<br><br>Todos os dados atuais do sistema serão <b>substituídos</b> pelos da cópia.`, 'Sim, restaurar', () => tentar(async () => {
+      await importar(novo, true);
+      tela = telaInicial(); tela.aba = 'ajustes'; desenhar();
+    }, 'Cópia restaurada!'));
   };
   leitor.readAsText(arq);
 }
 
+/* ================= IMPORTAR (cópia de segurança e dados antigos) ================= */
+async function importar(origem, substituir) {
+  if (substituir) {
+    await q(sb.from('cores').delete().neq('id', ''));
+    await q(sb.from('ingredientes').delete().neq('id', ''));
+    await q(sb.from('categorias').delete().neq('nome', ''));
+    await q(sb.from('unidades').delete().neq('nome', ''));
+    dados = vazio();
+  }
+  const novasCats = [], novasUnis = [], novosIng = [], novasCores = [], mapa = {};
+  const pegaCat = nome => {
+    nome = String(nome || '').trim(); if (!nome) return '';
+    const existe = [...dados.categorias, ...novasCats].find(c => normal(c) === normal(nome));
+    if (existe) return existe;
+    novasCats.push(nome); return nome;
+  };
+  const pegaUni = nome => {
+    nome = String(nome || '').trim(); if (!nome) return '';
+    const existe = [...dados.unidades, ...novasUnis].find(u => u === nome);
+    if (existe) return existe;
+    novasUnis.push(nome); return nome;
+  };
+  (origem.categorias || []).forEach(pegaCat);
+  (origem.unidades || []).forEach(pegaUni);
+  for (const ing of origem.ingredientes || []) {
+    const cat = pegaCat(ing.categoria), uni = pegaUni(ing.unidade);
+    const nome = String(ing.nome || '').trim() || '(sem nome)';
+    const existe = [...dados.ingredientes, ...novosIng].find(i => normal(i.nome) === normal(nome) && normal(i.categoria) === normal(cat));
+    if (existe) { mapa[ing.id] = existe.id; continue; }
+    const novo = { id: uid(), nome, categoria: cat, unidade: uni };
+    novosIng.push(novo); mapa[ing.id] = novo.id;
+  }
+  const refs = new Set(dados.cores.map(c => normal(c.referencia)));
+  for (const c of origem.cores || []) {
+    const ref = String(c.referencia || '').trim();
+    if (!ref || refs.has(normal(ref))) continue;
+    refs.add(normal(ref));
+    const itens = (c.itens || []).filter(it => mapa[it.ingredienteId]).map(it => ({ ingredienteId: mapa[it.ingredienteId], qtd: Number(it.qtd) || 0, unidade: pegaUni(it.unidade) }));
+    novasCores.push({ id: uid(), referencia: ref, nome: c.nome || '', hex: c.hex || '', obs: c.obs || '', itens, atualizado: c.atualizado || Date.now() });
+  }
+  const t0 = Date.now();
+  await emLotes('categorias', novasCats.map((nome, k) => ({ nome, criado: new Date(t0 + k).toISOString() })));
+  await emLotes('unidades', novasUnis.map((nome, k) => ({ nome, criado: new Date(t0 + k).toISOString() })));
+  await emLotes('ingredientes', novosIng);
+  await emLotes('cores', novasCores.map(paraLinha), 200);
+  await carregarTudo();
+  return novasCores.length;
+}
+
+// Cores cadastradas antes do login ficaram salvas só no navegador: oferece enviar para o sistema
+function lerDadosAntigos() {
+  try {
+    const d = JSON.parse(lerLocal(CHAVE_LOCAL) || 'null');
+    if (!d || !Array.isArray(d.cores) || !Array.isArray(d.ingredientes)) return null;
+    d.cores = d.cores.filter(c => !(c.referencia === 'EXEMPLO-001' && /pode apagar/.test(c.nome || '')));
+    return d;
+  } catch (e) { return null; }
+}
+function arquivarDadosAntigos() {
+  try {
+    localStorage.setItem(CHAVE_LOCAL + '-enviado', localStorage.getItem(CHAVE_LOCAL) || '');
+    localStorage.removeItem(CHAVE_LOCAL);
+  } catch (e) { }
+}
+function oferecerDadosAntigos() {
+  const antigos = lerDadosAntigos();
+  if (!antigos) return;
+  const refs = new Set(dados.cores.map(c => normal(c.referencia)));
+  const faltam = antigos.cores.filter(c => c.referencia && !refs.has(normal(c.referencia)));
+  if (!faltam.length) { arquivarDadosAntigos(); return; }
+  acaoModal = () => tentar(async () => {
+    const n = await importar({ ...antigos, cores: faltam }, false);
+    arquivarDadosAntigos();
+    fecharModal(); desenhar();
+    aviso(`${n} ${n === 1 ? 'cor enviada' : 'cores enviadas'} para o sistema!`);
+  });
+  abrirModal(`
+    <h2>Cores salvas neste computador</h2>
+    <p>Encontramos <b>${faltam.length} ${faltam.length === 1 ? 'cor' : 'cores'}</b> cadastradas neste computador antes do login:</p>
+    <p class="mini">${faltam.slice(0, 12).map(c => esc(c.referencia)).join(', ')}${faltam.length > 12 ? '...' : ''}</p>
+    <p>Deseja enviar para o sistema, para ficarem disponíveis em todos os computadores?</p>
+    <div class="rodape-form" style="margin-top:18px">
+      <button class="btn grande" onclick="fecharModal()">Agora não</button>
+      <button class="btn primario grande" onclick="confirmarModal()">Enviar para o sistema</button>
+    </div>`);
+}
+
 /* ================= INÍCIO ================= */
-carregar();
-if (podeSalvar) salvar();
-desenhar();
+async function iniciar() {
+  if (!window.supabase) {
+    document.getElementById('app').innerHTML = '<div class="faixa"><b>Não foi possível abrir o sistema.</b><br>Verifique a conexão com a internet e recarregue a página.</div>';
+    return;
+  }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_CHAVE);
+  sb.auth.onAuthStateChange((evento, s) => {
+    if (evento === 'SIGNED_OUT' && sessao) { sessao = null; dados = vazio(); carregado = false; tela = telaInicial(); desenhar(); }
+    else if (s) sessao = s;
+  });
+  const { data } = await sb.auth.getSession();
+  sessao = data.session;
+  if (sessao) iniciarApp(); else desenhar();
+}
+iniciar();
 </script>
 </body>
 </html>
